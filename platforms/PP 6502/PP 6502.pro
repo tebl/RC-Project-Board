@@ -1,4 +1,4 @@
-update=31/12/2019 00:51:45
+update=31/12/2019 01:19:24
 version=1
 last_client=kicad
 [pcbnew]
@@ -23,6 +23,8 @@ ModuleOutlineThickness=0.150000000000
 [cvpcb]
 version=1
 NetIExt=net
+[general]
+version=1
 [eeschema]
 version=1
 LibDir=library;../../common/library
@@ -58,8 +60,8 @@ LibName28=contrib
 LibName29=valves
 LibName30=mounting
 LibName31=rc1_backplane
-LibName32=library/breadboard
-LibName33=6522
+LibName32=6522
+LibName33=breadboard
 [schematic_editor]
 version=1
 PageLayoutDescrFile=
@@ -70,5 +72,3 @@ NetFmtName=Pcbnew
 SpiceForceRefPrefix=0
 SpiceUseNetNumbers=0
 LabSize=60
-[general]
-version=1

@@ -30,9 +30,9 @@ LIBS:contrib
 LIBS:valves
 LIBS:mounting
 LIBS:rc1_backplane
-LIBS:breadboard
 LIBS:6522
-LIBS:6502 Project Board-cache
+LIBS:breadboard
+LIBS:PP 6502-cache
 EELAYER 25 0
 EELAYER END
 $Descr A3 16535 11693
@@ -92,7 +92,7 @@ F 3 "" H 15900 575 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Text Notes 12175 10925 0    60   ~ 0
-6502 Project Board
+6502 Project Platform Board
 Entry Wire Line
 	14325 5300 14225 5400
 Text Label 14700 5300 2    60   ~ 0
