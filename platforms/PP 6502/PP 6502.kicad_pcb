@@ -3,7 +3,7 @@
   (general
     (links 121)
     (no_connects 0)
-    (area 100.254999 48.184999 199.465001 147.395001)
+    (area 93.345 43.815 204.470001 161.290001)
     (thickness 1.6)
     (drawings 463)
     (tracks 663)
@@ -2871,7 +2871,7 @@
   (gr_text github.com/tebl (at 195.58 109.855 90) (layer F.SilkS)
     (effects (font (size 1 1) (thickness 0.15)))
   )
-  (gr_text "Projects Board" (at 193.675 109.855 90) (layer F.SilkS)
+  (gr_text "Project Platform" (at 193.675 109.855 90) (layer F.SilkS)
     (effects (font (size 1 1) (thickness 0.15)))
   )
   (gr_text 6502 (at 104.14 109.855 90) (layer F.SilkS)
