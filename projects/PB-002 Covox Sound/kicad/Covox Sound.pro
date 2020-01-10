@@ -1,4 +1,4 @@
-update=31/12/2019 01:12:19
+update=10/01/2020 23:36:06
 version=1
 last_client=kicad
 [pcbnew]
@@ -23,9 +23,19 @@ ModuleOutlineThickness=0.150000000000
 [cvpcb]
 version=1
 NetIExt=net
+[schematic_editor]
+version=1
+PageLayoutDescrFile=
+PlotDirectoryName=export/
+SubpartIdSeparator=0
+SubpartFirstId=65
+NetFmtName=Pcbnew
+SpiceForceRefPrefix=0
+SpiceUseNetNumbers=0
+LabSize=60
 [eeschema]
 version=1
-LibDir=library;../../common/library
+LibDir=../../../common/library
 [eeschema/libraries]
 LibName1=power
 LibName2=device
@@ -56,19 +66,8 @@ LibName26=opto
 LibName27=atmel
 LibName28=contrib
 LibName29=valves
-LibName30=mounting
+LibName30=trs_3.5mm
 LibName31=rc1_backplane
-LibName32=library/led_cube_4x4
-LibName33=C:/Program Files/KiCad/share/kicad/library/switches
-[schematic_editor]
-version=1
-PageLayoutDescrFile=
-PlotDirectoryName=export/
-SubpartIdSeparator=0
-SubpartFirstId=65
-NetFmtName=Pcbnew
-SpiceForceRefPrefix=0
-SpiceUseNetNumbers=0
-LabSize=60
+LibName32=mounting
 [general]
 version=1
