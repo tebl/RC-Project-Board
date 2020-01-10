@@ -1245,7 +1245,7 @@ F 3 "" H 6500 2225 50  0001 C CNN
 	1    6500 2225
 	0    -1   -1   0   
 $EndComp
-Text Label 7200 2550 2    60   ~ 0
+Text Label 7175 2550 2    60   ~ 0
 ~IO3
 Wire Wire Line
 	6500 2475 6500 2550
@@ -1386,4 +1386,6 @@ Wire Bus Line
 	750  4650 1050 4650
 Text Notes 850  4100 0    60   ~ 0
 6522 clock selection jumper, solder\na link from 1-2 for most 6502-based\ncomputers. 2-3 for 6800-based CPUs.
+Text Notes 6950 2650 0    60   ~ 0
+$1700
 $EndSCHEMATC
