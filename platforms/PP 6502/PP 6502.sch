@@ -1049,11 +1049,11 @@ F 3 "" H 1250 3075 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Text Label 2550 2400 0    60   ~ 0
-8K1
+4K3
 Text Label 2550 2500 0    60   ~ 0
-8K2
+4K5
 Text Label 2550 2600 0    60   ~ 0
-8K3
+4K7
 Entry Wire Line
 	825  2200 925  2300
 Entry Wire Line
@@ -1061,23 +1061,23 @@ Entry Wire Line
 Entry Wire Line
 	825  2400 925  2500
 Text Notes 2800 2400 0    60   ~ 0
-$2000
+$3000
 Text Notes 2800 2500 0    60   ~ 0
-$4000
+$5000
 Text Notes 2800 2600 0    60   ~ 0
-$6000
+$7000
 Text Notes 2800 2700 0    60   ~ 0
-$8000
+$9000
 Text Notes 2800 2800 0    60   ~ 0
-$A000
+$B000
 Text Notes 2800 2900 0    60   ~ 0
-$C000
+$D000
 Text Label 2550 2700 0    60   ~ 0
-8K4
+4K9
 Text Label 2550 2800 0    60   ~ 0
-8K5
+4KB
 Text Label 2550 2900 0    60   ~ 0
-8K6
+4KD
 NoConn ~ 2525 2300
 $Comp
 L Conn_02x06_Odd_Even J4
