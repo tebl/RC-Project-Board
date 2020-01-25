@@ -1,0 +1,34 @@
+0000-                  4
+0000-                  5       * ----------------------------------------------------------------------
+0000-                  6       * SAMPLE PROGRAM AS FOUND IN THE BOOK "6502 APPLICATIONS BOOK" BY RODNEY
+0000-                  7       * ZAKS, IT IS A SOFTWARE METHOD OF CONTROLLING SOUND DURATION.ADAPTED FOR
+0000-                  8       * THE KIM-1 WITH THE 6502 PROJECT PLATFORM BOARD / COVOX PROJECT BOARD.
+0000-                  9       *
+0004-                 10       DELAY   .EQ     $04
+0000-                 11
+1700-                 12       VIA     .EQ     $1700
+1700-                 13       IRB     .EQ     VIA
+1701-                 14       ORA     .EQ     VIA+1
+1702-                 15       DDRB    .EQ     VIA+2
+1703-                 16       DDRA    .EQ     VIA+3
+0000-                 17
+0200-                 18               .OR     $0200
+0200-                 19               .TA     $0200
+0200-A9 80            20 (  2) START   LDA     #$80        LOAD A DEFAULT VALUE, START PROGRAM AT
+0202-85 04            21 (  2)         STA     DELAY        BSCSPK TO JUST USE ZP $04 AS IN THE BOOK.
+0204-A9 FF            22 (  2) BSCSPK  LDA     #$FF        SET PORT A
+0206-8D 03 17         23 (  4)         STA     DDRA         AS OUTPUTS
+0209-                 24
+0209-A9 20            25 (  2) AGAIN   LDA     #$20        DEFAULT VOLUME
+020B-8D 01 17         26 (  4)         STA     ORA         SET SPEAKER DRIVER HIGH
+020E-20 1C 02         27 (  6)         JSR     DLYB        CALL DELAY
+0211-A9 00            28 (  2)         LDA     #$00
+0213-8D 01 17         29 (  4)         STA     ORA         SET SPEAKER DRIVER LOW
+0216-20 1C 02         30 (  6)         JSR     DLYB        CALL DELAY
+0219-4C 09 02         31 (  3)         JMP     AGAIN
+021C-                 32
+021C-A6 04            33 (  3) DLYB    LDX     DELAY       LOAD DELAY VALUE INTO X
+021E-E8               34 (  2) LPXB    INX                 INCREMENT X
+021F-E0 00            35 (  2)         CPX     #$00
+0221-30 FB            36 (2**)         BMI     LPXB        LOOP TILL (X)=0
+0223-60               37 (  6)         RTS

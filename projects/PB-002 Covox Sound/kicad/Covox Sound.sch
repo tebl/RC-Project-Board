@@ -28,8 +28,9 @@ LIBS:opto
 LIBS:atmel
 LIBS:contrib
 LIBS:valves
-LIBS:mounting
 LIBS:trs_3.5mm
+LIBS:rc1_backplane
+LIBS:mounting
 LIBS:Covox Sound-cache
 EELAYER 25 0
 EELAYER END
@@ -106,8 +107,6 @@ F 3 "" H 4575 3300 50  0001 C CNN
 	1    4575 3300
 	1    0    0    -1  
 $EndComp
-Text Notes 11825 10550 0    60   ~ 0
-A 4x4 LED Cube with integrated template, created for slotting on top of the RC-ONE\nProject Board. As a cube it's rather small, but given that it already contains 64 individual\nLEDs I believe it's a manageable yet fun project.\n\nEach layer is constructed separately on the reverse side with 0.5mm diameter metal bars\nfor the anodes. Layers are then moved to the front and stacked.
 $Comp
 L Conn_01x10 J1
 U 1 1 5DE736F3
