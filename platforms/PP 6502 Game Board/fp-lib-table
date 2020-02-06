@@ -3,4 +3,5 @@
   (lib (name breadboard)(type KiCad)(uri "$(KIPRJMOD)/../../common/modules/breadboard.pretty")(options "")(descr ""))
   (lib (name speaker)(type KiCad)(uri "$(KIPRJMOD)/../../common/modules/speaker.pretty")(options "")(descr ""))
   (lib (name trs)(type KiCad)(uri "$(KIPRJMOD)/../../common/modules/TRS.pretty")(options "")(descr ""))
+  (lib (name logo)(type KiCad)(uri "$(KIPRJMOD)/../../common/modules/logo.pretty")(options "")(descr ""))
 )

@@ -1,4 +1,4 @@
-update=06/02/2020 00:06:39
+update=03/02/2020 19:39:46
 version=1
 last_client=kicad
 [pcbnew]
@@ -35,7 +35,7 @@ SpiceUseNetNumbers=0
 LabSize=60
 [eeschema]
 version=1
-LibDir=library;../../common/library
+LibDir=../../../common/library;library
 [eeschema/libraries]
 LibName1=power
 LibName2=device
@@ -66,10 +66,9 @@ LibName26=opto
 LibName27=atmel
 LibName28=contrib
 LibName29=valves
-LibName30=mounting
+LibName30=trs_3.5mm
 LibName31=rc1_backplane
-LibName32=6522
-LibName33=library/7416
-LibName34=trs_3.5mm
+LibName32=mounting
+LibName33=library/sw_keyboard
 [general]
 version=1
