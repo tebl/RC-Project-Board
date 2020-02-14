@@ -1188,7 +1188,7 @@ Wire Wire Line
 Text Notes 14550 1000 0    60   ~ 0
 Used to attach two PCBs on top\nof the other to serve as guides\nfor the vertical rods. Hex\nstandoffs used between them.
 Text Notes 6800 6600 0    60   ~ 0
-Used to attach two PCBs on top\n74LS374s drive 8 LEDs each,\nmaking up half of each layer.\n\nCP is clocked on positive edge,\nsignal taken low then high again\nto copy PA data to the latch.
+Used to attach two PCBs on top\n74LS374s drive 8 LEDs each,\nmaking up half of each layer.\n\nCP is clocked on positive edge,\nsignal taken low the high again\nto copy PA data to the latch.
 Text Notes 3175 8250 0    60   ~ 0
 Each layer is enabled by\nactivating the corresponding\ntransistor. Only one layer\nshould be enabled at a\ntime.
 Wire Wire Line

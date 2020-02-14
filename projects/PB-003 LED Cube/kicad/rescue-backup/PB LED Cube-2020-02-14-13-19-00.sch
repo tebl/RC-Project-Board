@@ -1,5 +1,39 @@
-EESchema Schematic File Version 4
-EELAYER 30 0
+EESchema Schematic File Version 2
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:mounting
+LIBS:rc1_backplane
+LIBS:led_cube_4x4
+LIBS:switches
+LIBS:PB LED Cube-cache
+EELAYER 25 0
 EELAYER END
 $Descr A3 16535 11693
 encoding utf-8
@@ -16,7 +50,7 @@ $EndDescr
 Text Notes 12175 10925 0    60   ~ 0
 PB LED Cube 4x4
 $Comp
-L power:VCC #PWR01
+L VCC #PWR01
 U 1 1 5D63F697
 P 14825 7525
 F 0 "#PWR01" H 14825 7375 50  0001 C CNN
@@ -27,7 +61,7 @@ F 3 "" H 14825 7525 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:GND #PWR02
+L GND #PWR02
 U 1 1 5D63F634
 P 14825 7775
 F 0 "#PWR02" H 14825 7525 50  0001 C CNN
@@ -40,7 +74,7 @@ $EndComp
 Text Notes 15400 11075 0    60   ~ 0
 A
 $Comp
-L rc1_backplane:RC1_Backplane J1
+L RC1_Backplane J1
 U 1 1 5DC149FA
 P 15150 7400
 F 0 "J1" H 15150 9400 50  0000 C CNN
@@ -53,7 +87,7 @@ $EndComp
 Wire Wire Line
 	14825 7700 14825 7775
 $Comp
-L Device:C_Small C1
+L C_Small C1
 U 1 1 5DD0E0B6
 P 11200 10550
 F 0 "C1" H 11210 10620 50  0000 L CNN
@@ -64,7 +98,7 @@ F 3 "" H 11200 10550 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:C_Small C2
+L C_Small C2
 U 1 1 5DD0E10C
 P 11475 10550
 F 0 "C2" H 11485 10620 50  0000 L CNN
@@ -75,7 +109,7 @@ F 3 "" H 11475 10550 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	11200 10300 11200 10375
+	11200 10300 11200 10450
 Wire Wire Line
 	11200 10375 11475 10375
 Wire Wire Line
@@ -85,7 +119,7 @@ Wire Wire Line
 Wire Wire Line
 	11200 10725 11475 10725
 $Comp
-L power:GND #PWR03
+L GND #PWR03
 U 1 1 5DD0E2DE
 P 11475 10800
 F 0 "#PWR03" H 11475 10550 50  0001 C CNN
@@ -97,7 +131,7 @@ F 3 "" H 11475 10800 50  0001 C CNN
 $EndComp
 Connection ~ 11475 10725
 $Comp
-L power:VCC #PWR04
+L VCC #PWR04
 U 1 1 5DD0E425
 P 11200 10300
 F 0 "#PWR04" H 11200 10150 50  0001 C CNN
@@ -109,11 +143,11 @@ F 3 "" H 11200 10300 50  0001 C CNN
 $EndComp
 Connection ~ 11200 10375
 Wire Wire Line
-	11475 10650 11475 10725
+	11475 10650 11475 10800
 Text Notes 11825 10550 0    60   ~ 0
 A 4x4 LED Cube with integrated template, created for slotting on top of the RC-ONE\nProject Board. As a cube it's rather small, but given that it already contains 64 individual\nLEDs I believe it's a manageable yet fun project.\n\nEach layer is constructed separately on the reverse side with 0.5mm diameter metal bars\nfor the anodes. Layers are then moved to the front and stacked.
 $Comp
-L conn:Conn_01x10 J5
+L Conn_01x10 J5
 U 1 1 5DE736F3
 P 9475 4025
 F 0 "J5" H 9475 4525 50  0000 C CNN
@@ -124,7 +158,7 @@ F 3 "" H 9475 4025 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L conn:Conn_01x10 J6
+L Conn_01x10 J6
 U 1 1 5DE7382E
 P 1475 6625
 F 0 "J6" H 1475 7125 50  0000 C CNN
@@ -215,9 +249,11 @@ Entry Wire Line
 Entry Wire Line
 	1925 6225 2025 6125
 Wire Bus Line
+	8925 3725 8925 4425
+Wire Bus Line
 	8925 4100 8525 4100
 $Comp
-L led_cube_4x4:LED_Cube_4x4 A1
+L LED_Cube_4x4 A1
 U 1 1 5DFEEB61
 P 6050 4625
 F 0 "A1" H 5525 4875 60  0000 C CNN
@@ -228,7 +264,7 @@ F 3 "" H 5875 4650 60  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L PB-LED-Cube-rescue:74LS374 U1
+L 74LS374 U1
 U 1 1 5DFEEC3E
 P 7475 4225
 F 0 "U1" H 7475 4225 50  0000 C CNN
@@ -239,7 +275,7 @@ F 3 "" H 7475 4225 50  0001 C CNN
 	-1   0    0    -1  
 $EndComp
 $Comp
-L PB-LED-Cube-rescue:74LS374 U2
+L 74LS374 U2
 U 1 1 5DFEF074
 P 7475 5350
 F 0 "U2" H 7475 5350 50  0000 C CNN
@@ -470,11 +506,15 @@ Entry Wire Line
 Entry Wire Line
 	8425 5550 8525 5650
 Wire Bus Line
+	8525 3825 8525 4525
+Wire Bus Line
+	8525 4950 8525 5650
+Wire Bus Line
 	8725 3100 8725 5275
 Wire Bus Line
 	8725 5275 8525 5275
 $Comp
-L transistors:PN2222A Q1
+L PN2222A Q1
 U 1 1 5DFF13D2
 P 3650 4675
 F 0 "Q1" V 3525 4525 50  0000 L CNN
@@ -485,7 +525,7 @@ F 3 "" H 3650 4675 50  0001 L CNN
 	0    1    1    0   
 $EndComp
 $Comp
-L Device:R R1
+L R R1
 U 1 1 5DFF172F
 P 3425 4400
 F 0 "R1" V 3505 4400 50  0001 C CNN
@@ -500,7 +540,7 @@ Wire Wire Line
 Wire Wire Line
 	3650 4475 3650 4400
 $Comp
-L power:GND #PWR05
+L GND #PWR05
 U 1 1 5DFF203C
 P 3375 4850
 F 0 "#PWR05" H 3375 4600 50  0001 C CNN
@@ -511,11 +551,11 @@ F 3 "" H 3375 4850 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	3850 4775 4075 4775
+	3850 4775 4450 4775
 Wire Wire Line
 	2600 4400 3275 4400
 $Comp
-L Device:R R9
+L R R9
 U 1 1 5DFF31AF
 P 4075 4550
 F 0 "R9" V 4155 4550 50  0001 C CNN
@@ -526,7 +566,7 @@ F 3 "" H 4075 4550 50  0001 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L power:VCC #PWR06
+L VCC #PWR06
 U 1 1 5DFF32E1
 P 4075 4400
 F 0 "#PWR06" H 4075 4250 50  0001 C CNN
@@ -600,7 +640,7 @@ Entry Wire Line
 Entry Wire Line
 	8425 4625 8525 4525
 $Comp
-L power:GND #PWR07
+L GND #PWR07
 U 1 1 5DFFC461
 P 8625 4800
 F 0 "#PWR07" H 8625 4550 50  0001 C CNN
@@ -615,7 +655,7 @@ Wire Wire Line
 Wire Wire Line
 	8625 4725 8175 4725
 $Comp
-L power:GND #PWR08
+L GND #PWR08
 U 1 1 5DFFC6E6
 P 8625 5925
 F 0 "#PWR08" H 8625 5675 50  0001 C CNN
@@ -632,7 +672,7 @@ Wire Wire Line
 Wire Bus Line
 	2200 3100 8725 3100
 $Comp
-L switches:SW_Push SW1
+L SW_Push SW1
 U 1 1 5DFFCFD9
 P 1375 8525
 F 0 "SW1" H 1425 8625 50  0000 L CNN
@@ -643,7 +683,7 @@ F 3 "" H 1375 8725 50  0001 C CNN
 	0    1    1    0   
 $EndComp
 $Comp
-L switches:SW_Push SW2
+L SW_Push SW2
 U 1 1 5DFFD118
 P 1650 8525
 F 0 "SW2" H 1700 8625 50  0000 L CNN
@@ -656,14 +696,14 @@ $EndComp
 Wire Wire Line
 	1375 8725 1375 8800
 Wire Wire Line
-	1375 8800 1525 8800
+	1375 8800 1650 8800
 Wire Wire Line
 	1650 8800 1650 8725
 Wire Wire Line
 	1525 8800 1525 8875
 Connection ~ 1525 8800
 $Comp
-L power:GND #PWR09
+L GND #PWR09
 U 1 1 5DFFD477
 P 1525 8875
 F 0 "#PWR09" H 1525 8625 50  0001 C CNN
@@ -674,7 +714,7 @@ F 3 "" H 1525 8875 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Device:R R13
+L R R13
 U 1 1 5DFFD627
 P 1375 7975
 F 0 "R13" V 1455 7975 50  0001 C CNN
@@ -685,7 +725,7 @@ F 3 "" H 1375 7975 50  0001 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L Device:R R14
+L R R14
 U 1 1 5DFFD73D
 P 1650 7975
 F 0 "R14" V 1730 7975 50  0001 C CNN
@@ -696,7 +736,7 @@ F 3 "" H 1650 7975 50  0001 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L power:VCC #PWR010
+L VCC #PWR010
 U 1 1 5DFFD76E
 P 1525 7675
 F 0 "#PWR010" H 1525 7525 50  0001 C CNN
@@ -709,16 +749,16 @@ $EndComp
 Wire Wire Line
 	1375 7825 1375 7750
 Wire Wire Line
-	1375 7750 1525 7750
+	1375 7750 1650 7750
 Wire Wire Line
 	1650 7750 1650 7825
 Wire Wire Line
 	1525 7750 1525 7675
 Connection ~ 1525 7750
 Wire Wire Line
-	1375 8125 1375 8150
+	1375 8125 1375 8325
 Wire Wire Line
-	1650 8125 1650 8250
+	1650 8125 1650 8325
 Wire Wire Line
 	2000 6925 2000 8150
 Wire Wire Line
@@ -734,7 +774,7 @@ Wire Wire Line
 Wire Wire Line
 	3650 4400 3575 4400
 $Comp
-L transistors:PN2222A Q2
+L PN2222A Q2
 U 1 1 5E000101
 P 3650 5575
 F 0 "Q2" V 3525 5425 50  0000 L CNN
@@ -745,7 +785,7 @@ F 3 "" H 3650 5575 50  0001 L CNN
 	0    1    1    0   
 $EndComp
 $Comp
-L Device:R R2
+L R R2
 U 1 1 5E000107
 P 3425 5300
 F 0 "R2" V 3505 5300 50  0001 C CNN
@@ -760,7 +800,7 @@ Wire Wire Line
 Wire Wire Line
 	3650 5375 3650 5300
 $Comp
-L power:GND #PWR011
+L GND #PWR011
 U 1 1 5E00010F
 P 3375 5750
 F 0 "#PWR011" H 3375 5500 50  0001 C CNN
@@ -771,9 +811,9 @@ F 3 "" H 3375 5750 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	3850 5675 4075 5675
+	3850 5675 4550 5675
 $Comp
-L Device:R R5
+L R R5
 U 1 1 5E000117
 P 4075 5450
 F 0 "R5" V 4155 5450 50  0001 C CNN
@@ -784,7 +824,7 @@ F 3 "" H 4075 5450 50  0001 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L power:VCC #PWR012
+L VCC #PWR012
 U 1 1 5E00011D
 P 4075 5300
 F 0 "#PWR012" H 4075 5150 50  0001 C CNN
@@ -799,7 +839,7 @@ Wire Wire Line
 Wire Wire Line
 	3650 5300 3575 5300
 $Comp
-L transistors:PN2222A Q3
+L PN2222A Q3
 U 1 1 5E0001BB
 P 3650 6475
 F 0 "Q3" V 3525 6325 50  0000 L CNN
@@ -810,7 +850,7 @@ F 3 "" H 3650 6475 50  0001 L CNN
 	0    1    1    0   
 $EndComp
 $Comp
-L Device:R R3
+L R R3
 U 1 1 5E0001C1
 P 3425 6200
 F 0 "R3" V 3505 6200 50  0001 C CNN
@@ -825,7 +865,7 @@ Wire Wire Line
 Wire Wire Line
 	3650 6275 3650 6200
 $Comp
-L power:GND #PWR013
+L GND #PWR013
 U 1 1 5E0001C9
 P 3375 6650
 F 0 "#PWR013" H 3375 6400 50  0001 C CNN
@@ -836,9 +876,9 @@ F 3 "" H 3375 6650 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	3850 6575 4075 6575
+	3850 6575 4650 6575
 $Comp
-L Device:R R6
+L R R6
 U 1 1 5E0001D1
 P 4075 6350
 F 0 "R6" V 4155 6350 50  0001 C CNN
@@ -849,7 +889,7 @@ F 3 "" H 4075 6350 50  0001 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L power:VCC #PWR014
+L VCC #PWR014
 U 1 1 5E0001D7
 P 4075 6200
 F 0 "#PWR014" H 4075 6050 50  0001 C CNN
@@ -864,7 +904,7 @@ Wire Wire Line
 Wire Wire Line
 	3650 6200 3575 6200
 $Comp
-L transistors:PN2222A Q4
+L PN2222A Q4
 U 1 1 5E000246
 P 3650 7375
 F 0 "Q4" V 3525 7225 50  0000 L CNN
@@ -875,7 +915,7 @@ F 3 "" H 3650 7375 50  0001 L CNN
 	0    1    1    0   
 $EndComp
 $Comp
-L Device:R R4
+L R R4
 U 1 1 5E00024C
 P 3425 7100
 F 0 "R4" V 3505 7100 50  0001 C CNN
@@ -890,7 +930,7 @@ Wire Wire Line
 Wire Wire Line
 	3650 7175 3650 7100
 $Comp
-L power:GND #PWR015
+L GND #PWR015
 U 1 1 5E000254
 P 3375 7550
 F 0 "#PWR015" H 3375 7300 50  0001 C CNN
@@ -901,9 +941,9 @@ F 3 "" H 3375 7550 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	3850 7475 4075 7475
+	3850 7475 4750 7475
 $Comp
-L Device:R R7
+L R R7
 U 1 1 5E00025C
 P 4075 7250
 F 0 "R7" V 4155 7250 50  0001 C CNN
@@ -914,7 +954,7 @@ F 3 "" H 4075 7250 50  0001 C CNN
 	-1   0    0    1   
 $EndComp
 $Comp
-L power:VCC #PWR016
+L VCC #PWR016
 U 1 1 5E000262
 P 4075 7100
 F 0 "#PWR016" H 4075 6950 50  0001 C CNN
@@ -973,7 +1013,7 @@ Wire Wire Line
 	4075 7400 4075 7475
 Connection ~ 4075 7475
 $Comp
-L Device:R R8
+L R R8
 U 1 1 5E0066C3
 P 6625 3725
 F 0 "R8" V 6705 3725 50  0001 C CNN
@@ -984,7 +1024,7 @@ F 3 "" H 6625 3725 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R10
+L R R10
 U 1 1 5E006B05
 P 6625 3825
 F 0 "R10" V 6705 3825 50  0001 C CNN
@@ -995,7 +1035,7 @@ F 3 "" H 6625 3825 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R11
+L R R11
 U 1 1 5E006B3A
 P 6625 3925
 F 0 "R11" V 6705 3925 50  0001 C CNN
@@ -1006,7 +1046,7 @@ F 3 "" H 6625 3925 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R12
+L R R12
 U 1 1 5E006B6F
 P 6625 4025
 F 0 "R12" V 6705 4025 50  0001 C CNN
@@ -1017,7 +1057,7 @@ F 3 "" H 6625 4025 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R15
+L R R15
 U 1 1 5E006BA4
 P 6625 4125
 F 0 "R15" V 6705 4125 50  0001 C CNN
@@ -1028,7 +1068,7 @@ F 3 "" H 6625 4125 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R16
+L R R16
 U 1 1 5E006BD9
 P 6625 4225
 F 0 "R16" V 6705 4225 50  0001 C CNN
@@ -1039,7 +1079,7 @@ F 3 "" H 6625 4225 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R17
+L R R17
 U 1 1 5E006C0E
 P 6625 4325
 F 0 "R17" V 6705 4325 50  0001 C CNN
@@ -1050,7 +1090,7 @@ F 3 "" H 6625 4325 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R18
+L R R18
 U 1 1 5E006C43
 P 6625 4425
 F 0 "R18" V 6705 4425 50  0001 C CNN
@@ -1061,7 +1101,7 @@ F 3 "" H 6625 4425 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R19
+L R R19
 U 1 1 5E006CB0
 P 6625 4850
 F 0 "R19" V 6705 4850 50  0001 C CNN
@@ -1072,7 +1112,7 @@ F 3 "" H 6625 4850 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R20
+L R R20
 U 1 1 5E006CE5
 P 6625 4950
 F 0 "R20" V 6705 4950 50  0001 C CNN
@@ -1083,7 +1123,7 @@ F 3 "" H 6625 4950 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R21
+L R R21
 U 1 1 5E006D1A
 P 6625 5050
 F 0 "R21" V 6705 5050 50  0001 C CNN
@@ -1094,7 +1134,7 @@ F 3 "" H 6625 5050 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R22
+L R R22
 U 1 1 5E006D4F
 P 6625 5150
 F 0 "R22" V 6705 5150 50  0001 C CNN
@@ -1105,7 +1145,7 @@ F 3 "" H 6625 5150 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R23
+L R R23
 U 1 1 5E006D84
 P 6625 5250
 F 0 "R23" V 6705 5250 50  0001 C CNN
@@ -1116,7 +1156,7 @@ F 3 "" H 6625 5250 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R24
+L R R24
 U 1 1 5E006DB9
 P 6625 5350
 F 0 "R24" V 6705 5350 50  0001 C CNN
@@ -1127,7 +1167,7 @@ F 3 "" H 6625 5350 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R25
+L R R25
 U 1 1 5E006DEE
 P 6625 5450
 F 0 "R25" V 6705 5450 50  0001 C CNN
@@ -1138,7 +1178,7 @@ F 3 "" H 6625 5450 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L Device:R R26
+L R R26
 U 1 1 5E006E23
 P 6625 5550
 F 0 "R26" V 6705 5550 50  0001 C CNN
@@ -1149,7 +1189,7 @@ F 3 "" H 6625 5550 50  0001 C CNN
 	0    -1   -1   0   
 $EndComp
 $Comp
-L mounting:Mounting M3
+L Mounting M3
 U 1 1 5E007EB8
 P 15975 550
 F 0 "M3" H 15975 650 50  0001 C CNN
@@ -1160,7 +1200,7 @@ F 3 "" H 15975 550 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L mounting:Mounting M2
+L Mounting M2
 U 1 1 5E007F3A
 P 15850 550
 F 0 "M2" H 15850 650 50  0001 C CNN
@@ -1171,7 +1211,7 @@ F 3 "" H 15850 550 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L mounting:Mounting M1
+L Mounting M1
 U 1 1 5E007F6F
 P 15725 550
 F 0 "M1" H 15725 650 50  0001 C CNN
@@ -1188,33 +1228,7 @@ Wire Wire Line
 Text Notes 14550 1000 0    60   ~ 0
 Used to attach two PCBs on top\nof the other to serve as guides\nfor the vertical rods. Hex\nstandoffs used between them.
 Text Notes 6800 6600 0    60   ~ 0
-Used to attach two PCBs on top\n74LS374s drive 8 LEDs each,\nmaking up half of each layer.\n\nCP is clocked on positive edge,\nsignal taken low then high again\nto copy PA data to the latch.
+Used to attach two PCBs on top\n74LS374s drive 8 LEDs each,\nmaking up half of each layer.\n\nCP is clocked on positive edge,\nsignal taken low the high again\nto copy PA data to the latch.
 Text Notes 3175 8250 0    60   ~ 0
 Each layer is enabled by\nactivating the corresponding\ntransistor. Only one layer\nshould be enabled at a\ntime.
-Wire Wire Line
-	11475 10725 11475 10800
-Wire Wire Line
-	11200 10375 11200 10450
-Wire Wire Line
-	1525 8800 1650 8800
-Wire Wire Line
-	1525 7750 1650 7750
-Wire Wire Line
-	1375 8150 1375 8325
-Wire Wire Line
-	1650 8250 1650 8325
-Wire Wire Line
-	4075 5675 4550 5675
-Wire Wire Line
-	4075 6575 4650 6575
-Wire Wire Line
-	4075 4775 4450 4775
-Wire Wire Line
-	4075 7475 4750 7475
-Wire Bus Line
-	8925 3725 8925 4425
-Wire Bus Line
-	8525 3825 8525 4525
-Wire Bus Line
-	8525 4950 8525 5650
 $EndSCHEMATC
