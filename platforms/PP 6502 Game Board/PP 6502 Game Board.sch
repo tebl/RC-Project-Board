@@ -39,7 +39,7 @@ EELAYER END
 $Descr A3 16535 11693
 encoding utf-8
 Sheet 1 1
-Title "ACIA"
+Title "6502 Game Board (PP)"
 Date ""
 Rev "A"
 Comp ""
@@ -1941,4 +1941,6 @@ F 3 "" H 7475 8750 50  0001 C CNN
 	1    7475 8750
 	-1   0    0    -1  
 $EndComp
+Text Notes 11850 10375 0    60   ~ 0
+Rodney Zaks wrote a whole book of games for the SYM-1 and I wanted to build it for\nuse with my computers as well. so this board takes care of the logic needed for a\n6502 or 6800 based computer. Also requires the game board project fitted on top as\nit contains all of the interactive parts needed.
 $EndSCHEMATC

@@ -33,13 +33,12 @@ LIBS:rc1_backplane
 LIBS:mounting
 LIBS:sw_keyboard
 LIBS:Game Board-cache
-LIBS:PP 6502 Game Board-cache
 EELAYER 25 0
 EELAYER END
 $Descr A3 16535 11693
 encoding utf-8
 Sheet 1 1
-Title "ACIA"
+Title "6502 Game Board"
 Date ""
 Rev "A"
 Comp ""
@@ -1277,4 +1276,6 @@ F 3 "" H 6925 10725 50  0001 C CNN
 	1    6925 10725
 	1    0    0    -1  
 $EndComp
+Text Notes 11875 10375 0    60   ~ 0
+6502 Game Board only slots into 6502 Game Board (PP). Somewhat limiting and not\nexactly what this repository was for, but Rodney Zaks wrote a whole book of games\nfor the SYM-1 and I wanted to build it for the RC-ONE instead. The logic is placed\nbelow on the Project Platform board (PP).
 $EndSCHEMATC
