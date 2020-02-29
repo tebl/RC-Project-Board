@@ -1,6 +1,6 @@
         .CR     65C02
-        .TF     music.hex,hex
-        .LF     music.list
+        .TF     hexguess.hex,hex
+        .LF     hexguess.list
 ;
 ; MUSIC PLAYER FOR THE BE6502 USING '6502 GAMES' HARDWARE. BOARD SHOULD BE 
 ; JUMPERED WITH VIA CHIPS AT THE ADDRESSES SPECIFIED BELOW. OTHER THAN THAT
@@ -12,7 +12,7 @@ VIA3    .EQ     $4C00       ; GAME BOARD (VIA #3)
         .OR     $8000
         .TA     $0000
 BE6502  JSR     INITKEY
-        .IN     ../../common/CH02-Music/player.asm
+        .IN     ../../common/CH04-Hexguess/game.asm
         .IN     ../../common/CH01-Getkey/getkey_routine.asm
 ;
 ; STORE CPU INITIALIZATION VECTORS AT THE END OF THE EEPROM.

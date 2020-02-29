@@ -1,0 +1,131 @@
+;   'HEXGUESS'
+;   HEXADECIMAL NUMBER GUESSING GAME.
+; THE OBJECT OF THE GAME IS TO GUESS A HEXADECIMAL NUMBER THAT THE COMPUTER HAS
+; THOUGHT UP. WHEN THE COMPUTER 'BEEPS', A GUESS SHOULD BE ENTERED. GUESSES ARE
+; TWO DIGIT HEXADECIMAL NUMBERS, WHEN TWO DIGITS HAVE BEEN RECEIVED THE 
+; COMPUTER WILL DISPLAY THE NEARNESS OF THE GUESS BY LIGHTING A NUMBER OF LEDS
+; PROPORTIONAL TO THE CLOSENESS OF THE GUESS. TEN GUESSES ARE ALLOWED. IF A
+; GUESS IS CORRECT, THEN THE COMPUTER WILL FLASH THE LEDS AND MAKE A WARBLING
+; TONE.
+;
+;
+; 6522 VIA #1 ADDRESSES:
+TIMER   .EQ     VIA1+4      ; LOW LATCH OF TIMER 1
+DDR1A   .EQ     VIA1+3      ; PORT A DATA DIRECTION REGISTER
+DDR1B   .EQ     VIA1+3      ; PORT B DATA DIRECTION REGISTER
+PORT1A  .EQ     VIA1+1      ; PORT A
+PORT1B  .EQ     VIA1        ; PORT B
+; 6522 VIA #3 ADDRESSES:
+DDR3A   .EQ     VIA3+1      ; PORT A DATA DIRECTION REGISTER
+DDR3B   .EQ     VIA3+2      ; PORT B DATA DIRECTION REGISTER
+PORT3B  .EQ     VIA3        ; PORT B    
+PORT3A  .EQ     VIA3+1      ; PORT A
+; STORAGES:
+ZP      .EQ     $00
+GUESS   .EQ     ZP
+GUESSN  .EQ     ZP+1
+DUR     .EQ     ZP+2
+FREQ    .EQ     ZP+3
+NUMBER  .EQ     ZP+4    
+
+        LDA     #$FF        ; SET UP DATA DIRECTION REGISTERS
+        STA     DDR1A
+        STA     DDR1B
+        STA     DDR3B
+        STA     DUR         ; SET UP TONE DURATIONS.
+START   LDA     #$0A        ; 10 GUESSES ALLOWED
+        STA     GUESSN
+        LDA     #0          ; BLANK LEDS
+        STA     PORT1A
+        STA     PORT1B
+        LDA     TIMER       ; GET RANDOM NUMBER TO GUESS
+        STA     NUMBER      ; ... AND SAVE.
+GETGES  LDA     #$20        ; SET UP SHORT HIGH TONE TO SIGNAL USER TO
+                            ;  INPUT GUESS.
+        JSR     TONE        ; MAKE BEEP.
+        JSR     GETKEY      ; GET HIGH ORDER USER GUESS
+        ASL     A           ; SHIFT INTO HIGH ORDER POSITION
+        ASL     A
+        ASL     A
+        ASL     A
+        STA     GUESS       ; SAVE
+        JSR     GETKEY      ; GET LOW ORDER USER GUESS
+        AND     #%00001111  ; MASK HIGH ORDER BITS.
+        ORA     GUESS       ; ADD HIGH ORDER NIBBLE.
+        STA     GUESS       ; FINAL PRODUCT SAVED.
+        LDA     NUMBER      ; GET NUMBER FOR COMPARE
+        SEC                 ; SUBTRACT GUESS FROM NUMBER TO DETERMINE THE
+        SBC     GUESS       ;  NEARNESS OF THE GUESS.
+        BCS     ALRIGHT     ; POSITIVE VALUE NEEDS NO FIX.
+        EOR     #%11111111  ; MAKE DISTANCE ABSOLUTE
+        SEC                 ; MAKE IT A TWO'S COMPLEMENT
+        ADC     #00         ; ... NOT JUST A ONE'S COMPLEMENT.
+ALRIGHT LDX     #00         ; SET CLOSENESS COUNTER TO DISTANT
+LOOP    CMP     LIMITS,X    ; COMPARE NEARNESS OF GUESS TO TABLE OF LIMITS
+                            ;  TO SEE HOW MANY LIGHTS TO LIGHT.
+        BCS     SIGNAL      ; NEARNESS IS BIGGER THAN LIMIT, SO GO
+                            ;  LIGHT INDICATOR INSTEAD.
+        INX                 ; LOOK AT NEXT CLOSENESS LEVEL.
+        CPX     #9          ; ALL NINE LEVELS TRIED?
+        BNE     LOOP        ; NO, TRY NEXT LEVEL.
+WIN     LDA     #11         ; YES; WIN! LOAD NUMBER OF BLINKS
+        STA     GUESS       ; USE GUESS AS TEMP
+        LDA     #$FF        ; LIGHT LEDS
+        STA     PORT1A
+        STA     PORT1B
+WOW     LDA     #50         ; TONE VALUE
+        JSR     TONE        ; MAKE WIN SIGNAL
+        LDA     #$FF
+        EOR     PORT1A      ; COMPLEMENT PORTS
+        STA     PORT1A
+        STA     PORT1B
+        DEC     GUESS       ; BLINKS/TONES DONE?
+        BNE     WOW         ; NO, DO AGAIN.
+        BEQ     START       ; YES, START NEW GAME.
+SIGNAL  INX                 ; INCREMENT CLOSENESS LEVEL COUNTER SO AT
+                            ;  LEAST 1 LED IS LIT.
+        LDA     #0          ; CLEAR HIGH LED PORT
+        STA     PORT1B
+        JSR     LITE        ; GET LED PATTERN
+        STA     PORT1A      ; SET LEDS
+        BCC     CC          ; IF CARRY SET PB0 = 1
+        LDA     #01
+        STA     PORT1B
+CC      DEC     GUESSN      ; ONE GUESS USED
+        BNE     GETGES      ; SOME LEFT, GET NEXT.
+        LDA     #$BE        ; LOW TONE SIGNALS LOSE
+        JSR     TONE
+        JMP     START       ; NEW GAME
+;
+; SUBROUTINE 'LITE'
+; ROUTINE TO MAKE PATTERN OF LIT LEDS BY SHIFTING A STRING OF ONES TO THE
+; LEFT IN THE ACCUMULATOR UNTIL THE BIT POSITION CORRESPONDING TO THE NUMBER
+; IN X IS REACHED.
+;
+LITE    LDA     #0          ; CLEAR ACCUMULATOR FOR PATTERN
+SHIFT   SEC                 ; MAKE LOW BIT HIGH.
+        ROL     A           ; SHIFT IT IN
+        DEX                 ; ONE BIT DONE...
+        BNE     SHIFT       ;  LOOP IF NOT DONE.
+        RTS                 ; RETURN
+;
+; SUBROUTINE 'TONE'
+; TONE GENERATION ROUTINE.
+;
+TONE    STA     FREQ
+        LDA     #0
+        LDX     DUR
+FL2     LDY     FREQ
+FL1     DEY
+        CLC
+        BCC     FL0         ; (.+2 IN BOOK)
+FL0     BNE     FL1
+        EOR     #$FF
+        STA     PORT3B
+        DEX
+        BNE     FL2
+        RTS
+;
+; TABLE OF LIMITS FOR CLOSENESS LEVELS.
+;
+LIMITS  .HS     C8.80.40.20.10.08.04.02.01

@@ -1,0 +1,183 @@
+0000-                  4       ;
+0000-                  5       ; HEX GUESSING GAME FOR THE KIM-1 USING '6502 GAMES' HARDWARE. BOARD SHOULD BE
+0000-                  6       ; JUMPERED WITH VIA CHIPS AT THE ADDRESSES SPECIFIED BELOW. OTHER THAN THAT
+0000-                  7       ; THE CODE IS UNCHANGED FROM THE BOOK.
+0000-                  8       ;
+C000-                  9       VIA1    .EQ     $C000
+CC00-                 10       VIA3    .EQ     $CC00
+0000-                 11
+0200-                 12               .OR     $0200
+0200-                 13               .TA     $0200
+0200-                 14               .IN     ../../common/CH04-Hexguess/game.asm
+0200-            I     1       ;   'HEXGUESS'
+0200-            I     2       ;   HEXADECIMAL NUMBER GUESSING GAME.
+0200-            I     3       ; THE OBJECT OF THE GAME IS TO GUESS A HEXADECIMAL NUMBER THAT THE COMPUTER HAS
+0200-            I     4       ; THOUGHT UP. WHEN THE COMPUTER 'BEEPS', A GUESS SHOULD BE ENTERED. GUESSES ARE
+0200-            I     5       ; TWO DIGIT HEXADECIMAL NUMBERS, WHEN TWO DIGITS HAVE BEEN RECEIVED THE
+0200-            I     6       ; COMPUTER WILL DISPLAY THE NEARNESS OF THE GUESS BY LIGHTING A NUMBER OF LEDS
+0200-            I     7       ; PROPORTIONAL TO THE CLOSENESS OF THE GUESS. TEN GUESSES ARE ALLOWED. IF A
+0200-            I     8       ; GUESS IS CORRECT, THEN THE COMPUTER WILL FLASH THE LEDS AND MAKE A WARBLING
+0200-            I     9       ; TONE.
+0200-            I    10       ;
+0200-            I    11       ;
+0200-            I    12       ; 6522 VIA #1 ADDRESSES:
+C004-            I    13       TIMER   .EQ     VIA1+4      ; LOW LATCH OF TIMER 1
+C003-            I    14       DDR1A   .EQ     VIA1+3      ; PORT A DATA DIRECTION REGISTER
+C003-            I    15       DDR1B   .EQ     VIA1+3      ; PORT B DATA DIRECTION REGISTER
+C001-            I    16       PORT1A  .EQ     VIA1+1      ; PORT A
+C000-            I    17       PORT1B  .EQ     VIA1        ; PORT B
+0200-            I    18       ; 6522 VIA #3 ADDRESSES:
+CC01-            I    19       DDR3A   .EQ     VIA3+1      ; PORT A DATA DIRECTION REGISTER
+CC02-            I    20       DDR3B   .EQ     VIA3+2      ; PORT B DATA DIRECTION REGISTER
+CC00-            I    21       PORT3B  .EQ     VIA3        ; PORT B
+CC01-            I    22       PORT3A  .EQ     VIA3+1      ; PORT A
+0200-            I    23       ; STORAGES:
+0000-            I    24       ZP      .EQ     $00
+0000-            I    25       GUESS   .EQ     ZP
+0001-            I    26       GUESSN  .EQ     ZP+1
+0002-            I    27       DUR     .EQ     ZP+2
+0003-            I    28       FREQ    .EQ     ZP+3
+0004-            I    29       NUMBER  .EQ     ZP+4
+0200-            I    30
+0200-A9 FF       I    31 (  2)         LDA     #$FF        ; SET UP DATA DIRECTION REGISTERS
+0202-8D 03 C0    I    32 (  4)         STA     DDR1A
+0205-8D 03 C0    I    33 (  4)         STA     DDR1B
+0208-8D 02 CC    I    34 (  4)         STA     DDR3B
+020B-85 02       I    35 (  2)         STA     DUR         ; SET UP TONE DURATIONS.
+020D-A9 0A       I    36 (  2) START   LDA     #$0A        ; 10 GUESSES ALLOWED
+020F-85 01       I    37 (  2)         STA     GUESSN
+0211-A9 00       I    38 (  2)         LDA     #0          ; BLANK LEDS
+0213-8D 01 C0    I    39 (  4)         STA     PORT1A
+0216-8D 00 C0    I    40 (  4)         STA     PORT1B
+0219-AD 04 C0    I    41 (  4)         LDA     TIMER       ; GET RANDOM NUMBER TO GUESS
+021C-85 04       I    42 (  2)         STA     NUMBER      ; ... AND SAVE.
+021E-A9 20       I    43 (  2) GETGES  LDA     #$20        ; SET UP SHORT HIGH TONE TO SIGNAL USER TO
+0220-            I    44                                   ;  INPUT GUESS.
+0220-20 96 02    I    45 (  6)         JSR     TONE        ; MAKE BEEP.
+0223-20 B6 02    I    46 (  6)         JSR     GETKEY      ; GET HIGH ORDER USER GUESS
+0226-0A          I    47 (  2)         ASL     A           ; SHIFT INTO HIGH ORDER POSITION
+0227-0A          I    48 (  2)         ASL     A
+0228-0A          I    49 (  2)         ASL     A
+0229-0A          I    50 (  2)         ASL     A
+022A-85 00       I    51 (  2)         STA     GUESS       ; SAVE
+022C-20 B6 02    I    52 (  6)         JSR     GETKEY      ; GET LOW ORDER USER GUESS
+022F-29 0F       I    53 (  2)         AND     #%00001111  ; MASK HIGH ORDER BITS.
+0231-05 00       I    54 (  3)         ORA     GUESS       ; ADD HIGH ORDER NIBBLE.
+0233-85 00       I    55 (  2)         STA     GUESS       ; FINAL PRODUCT SAVED.
+0235-A5 04       I    56 (  3)         LDA     NUMBER      ; GET NUMBER FOR COMPARE
+0237-38          I    57 (  2)         SEC                 ; SUBTRACT GUESS FROM NUMBER TO DETERMINE THE
+0238-E5 00       I    58 (  3)         SBC     GUESS       ;  NEARNESS OF THE GUESS.
+023A-B0 05       I    59 (2**)         BCS     ALRIGHT     ; POSITIVE VALUE NEEDS NO FIX.
+023C-49 FF       I    60 (  2)         EOR     #%11111111  ; MAKE DISTANCE ABSOLUTE
+023E-38          I    61 (  2)         SEC                 ; MAKE IT A TWO'S COMPLEMENT
+023F-69 00       I    62 (  2)         ADC     #00         ; ... NOT JUST A ONE'S COMPLEMENT.
+0241-A2 00       I    63 (  2) ALRIGHT LDX     #00         ; SET CLOSENESS COUNTER TO DISTANT
+0243-DD AD 02    I    64 ( 4*) LOOP    CMP     LIMITS,X    ; COMPARE NEARNESS OF GUESS TO TABLE OF LIMITS
+0246-            I    65                                   ;  TO SEE HOW MANY LIGHTS TO LIGHT.
+0246-B0 27       I    66 (2**)         BCS     SIGNAL      ; NEARNESS IS BIGGER THAN LIMIT, SO GO
+0248-            I    67                                   ;  LIGHT INDICATOR INSTEAD.
+0248-E8          I    68 (  2)         INX                 ; LOOK AT NEXT CLOSENESS LEVEL.
+0249-E0 09       I    69 (  2)         CPX     #9          ; ALL NINE LEVELS TRIED?
+024B-D0 F6       I    70 (2**)         BNE     LOOP        ; NO, TRY NEXT LEVEL.
+024D-A9 0B       I    71 (  2) WIN     LDA     #11         ; YES; WIN! LOAD NUMBER OF BLINKS
+024F-85 00       I    72 (  2)         STA     GUESS       ; USE GUESS AS TEMP
+0251-A9 FF       I    73 (  2)         LDA     #$FF        ; LIGHT LEDS
+0253-8D 01 C0    I    74 (  4)         STA     PORT1A
+0256-8D 00 C0    I    75 (  4)         STA     PORT1B
+0259-A9 32       I    76 (  2) WOW     LDA     #50         ; TONE VALUE
+025B-20 96 02    I    77 (  6)         JSR     TONE        ; MAKE WIN SIGNAL
+025E-A9 FF       I    78 (  2)         LDA     #$FF
+0260-4D 01 C0    I    79 (  4)         EOR     PORT1A      ; COMPLEMENT PORTS
+0263-8D 01 C0    I    80 (  4)         STA     PORT1A
+0266-8D 00 C0    I    81 (  4)         STA     PORT1B
+0269-C6 00       I    82 (  5)         DEC     GUESS       ; BLINKS/TONES DONE?
+026B-D0 EC       I    83 (2**)         BNE     WOW         ; NO, DO AGAIN.
+026D-F0 9E       I    84 (2**)         BEQ     START       ; YES, START NEW GAME.
+026F-E8          I    85 (  2) SIGNAL  INX                 ; INCREMENT CLOSENESS LEVEL COUNTER SO AT
+0270-            I    86                                   ;  LEAST 1 LED IS LIT.
+0270-A9 00       I    87 (  2)         LDA     #0          ; CLEAR HIGH LED PORT
+0272-8D 00 C0    I    88 (  4)         STA     PORT1B
+0275-20 8E 02    I    89 (  6)         JSR     LITE        ; GET LED PATTERN
+0278-8D 01 C0    I    90 (  4)         STA     PORT1A      ; SET LEDS
+027B-90 05       I    91 (2**)         BCC     CC          ; IF CARRY SET PB0 = 1
+027D-A9 01       I    92 (  2)         LDA     #01
+027F-8D 00 C0    I    93 (  4)         STA     PORT1B
+0282-C6 01       I    94 (  5) CC      DEC     GUESSN      ; ONE GUESS USED
+0284-D0 98       I    95 (2**)         BNE     GETGES      ; SOME LEFT, GET NEXT.
+0286-A9 BE       I    96 (  2)         LDA     #$BE        ; LOW TONE SIGNALS LOSE
+0288-20 96 02    I    97 (  6)         JSR     TONE
+028B-4C 0D 02    I    98 (  3)         JMP     START       ; NEW GAME
+028E-            I    99       ;
+028E-            I   100       ; SUBROUTINE 'LITE'
+028E-            I   101       ; ROUTINE TO MAKE PATTERN OF LIT LEDS BY SHIFTING A STRING OF ONES TO THE
+028E-            I   102       ; LEFT IN THE ACCUMULATOR UNTIL THE BIT POSITION CORRESPONDING TO THE NUMBER
+028E-            I   103       ; IN X IS REACHED.
+028E-            I   104       ;
+028E-A9 00       I   105 (  2) LITE    LDA     #0          ; CLEAR ACCUMULATOR FOR PATTERN
+0290-38          I   106 (  2) SHIFT   SEC                 ; MAKE LOW BIT HIGH.
+0291-2A          I   107 (  2)         ROL     A           ; SHIFT IT IN
+0292-CA          I   108 (  2)         DEX                 ; ONE BIT DONE...
+0293-D0 FB       I   109 (2**)         BNE     SHIFT       ;  LOOP IF NOT DONE.
+0295-60          I   110 (  6)         RTS                 ; RETURN
+0296-            I   111       ;
+0296-            I   112       ; SUBROUTINE 'TONE'
+0296-            I   113       ; TONE GENERATION ROUTINE.
+0296-            I   114       ;
+0296-85 03       I   115 (  2) TONE    STA     FREQ
+0298-A9 00       I   116 (  2)         LDA     #0
+029A-A6 02       I   117 (  3)         LDX     DUR
+029C-A4 03       I   118 (  3) FL2     LDY     FREQ
+029E-88          I   119 (  2) FL1     DEY
+029F-18          I   120 (  2)         CLC
+02A0-90 00       I   121 (2**)         BCC     FL0         ; (.+2 IN BOOK)
+02A2-D0 FA       I   122 (2**) FL0     BNE     FL1
+02A4-49 FF       I   123 (  2)         EOR     #$FF
+02A6-8D 00 CC    I   124 (  4)         STA     PORT3B
+02A9-CA          I   125 (  2)         DEX
+02AA-D0 F0       I   126 (2**)         BNE     FL2
+02AC-60          I   127 (  6)         RTS
+02AD-            I   128       ;
+02AD-            I   129       ; TABLE OF LIMITS FOR CLOSENESS LEVELS.
+02AD-            I   130       ;
+02AD-C8 80 40 20 
+     10 08 04 02 
+     01          I   131       LIMITS  .HS     C8.80.40.20.10.08.04.02.01
+02B6-                 15               .IN     ../../common/CH01-Getkey/getkey_routine.asm
+02B6-            I     1       ; 'GETKEY' KEYBOARD INPUT ROUTINE READS AND DEBOUNCES KEYBOARD. RETURNS WITH
+02B6-            I     2       ; KEY NUMBER IN ACCUMULATOR IF KEY DOWN. OPERATION: SENDS NUMBERS 0-F TO 74154
+02B6-            I     3       ; (4 TO 16 LINE DECODER), WHICH GROUNDS ONE SIDE OF KEYSWITCHES ONE AT A TIME.
+02B6-            I     4       ; IF A KEY IS DOWN, PA7 OF VIA #3 WILL BE GROUNDED, AND THE CURRENT VALUE
+02B6-            I     5       ; APPLIED TO THE 74154 BE THE KEY NUMBER. WHEN THE PROGRAM DETECTS A KEY CLOSE
+02B6-            I     6       ; CHECKS FOR KEY CLOSURE FOR 50 MS. TO ELIMINATE BOUNCE.
+02B6-            I     7       ; NOTE: IF NO KEY IS PRESSED, GETKEY WILL WAIT.
+02B6-            I     8       ;
+02B6-2C 01 CC    I     9 (  4) GETKEY  BIT     PORT3A      ; SEE IF KEY IS STILL DOWN FROM LAST KEY CLOSURE:
+02B9-            I    10                                   ;  KEYSTROBE IN 'N' STATUS BIT.
+02B9-10 FB       I    11 (2**)         BPL     GETKEY      ; IF YES, WAIT FOR KEY RELEASE
+02BB-A2 0F       I    12 (  2) RSTART  LDX     #15         ; SET KEY COUNTER TO 15
+02BD-8E 00 CC    I    13 (  4) NXTKEY  STX     PORT3B      ; OUTPUT KEY # TO 74154
+02C0-2C 01 CC    I    14 (  4)         BIT     PORT3A      ; SEE IF KEY DOWN: STROBE IN 'N'
+02C3-10 05       I    15 (2**)         BPL     BOUNCE      ;  IF YES, GO DEBOUNCE
+02C5-CA          I    16 (  2)         DEX                 ;   DECREMENT KEY #
+02C6-10 F5       I    17 (2**)         BPL     NXTKEY      ;  NO, DO NEXT KEY
+02C8-30 F1       I    18 (2**)         BMI     RSTART      ; START OVER
+02CA-8A          I    19 (  2) BOUNCE  TXA                 ; SAVE KEY NUMBER IN A
+02CB-A0 12       I    20 (  2)         LDY     #$12        ; OUTER LOOP CNT LOAD FOR DELAY OF 50 MS.
+02CD-A2 FF       I    21 (  2) LP1     LDX     #$FF        ; INNER 11 US. LOOP
+02CF-2C 01 CC    I    22 (  4) LP2     BIT     PORT3A      ; SEE IF KEY STILL DOWN
+02D2-30 E7       I    23 (2**)         BMI     RSTART      ; IF NOT, KEY NOT VALID, RESTART
+02D4-CA          I    24 (  2)         DEX
+02D5-D0 F8       I    25 (2**)         BNE     LP2         ; THIS LOOP USES 2115*5 US.
+02D7-88          I    26 (  2)         DEY
+02D8-D0 F3       I    27 (2**)         BNE     LP1         ; OUTER LOOP: TOTAL IS 50 MS.
+02DA-60          I    28 (  6)         RTS                 ; DONE: KEY IN A.
+02DB-            I    29       ;
+02DB-            I    30       ; SUBROUTINE 'INITKEY'
+02DB-            I    31       ; TAKES CARE OF INITIALIZING VIA #3 FOR USING WITH THE GETKEY ROUTINE FROM
+02DB-            I    32       ; THE CODE.
+02DB-            I    33       ;
+02DB-A9 00       I    34 (  2) INITKEY LDA     #0
+02DD-8D 01 CC    I    35 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+02E0-A9 FF       I    36 (  2)         LDA     #$FF
+02E2-8D 02 CC    I    37 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
+02E5-60          I    38 (  6)         RTS

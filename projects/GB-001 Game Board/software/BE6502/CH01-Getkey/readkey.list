@@ -13,10 +13,10 @@
 4C00-                 16       VIA3    .EQ     $4C00       ; GAME BOARD (VIA #3)
 6000-                 17       PORT0B  .EQ     VIA0
 6002-                 18       DDR0B   .EQ     VIA0+2
-4C03-                 19       DDR3A   .EQ     VIA3+3      ; USING RC-ONE ADDRESS DECODING SCHEME, PLACING
-4C02-                 20       DDR3B   .EQ     VIA3+2      ;  VIA3 AT $CC00 BY DEFAULT (INSTEAD OF $AC00)
-4C01-                 21       PORT3A  .EQ     VIA3+1      ;  TO FIT RC-ONE ADDRESS DECODING THOUGH ORIGINAL
-4C00-                 22       PORT3B  .EQ     VIA3        ;  CAN BE JUMPERED IF NEEDED/WANTED.
+4C03-                 19       DDR3A   .EQ     VIA3+3
+4C02-                 20       DDR3B   .EQ     VIA3+2
+4C01-                 21       PORT3A  .EQ     VIA3+1
+4C00-                 22       PORT3B  .EQ     VIA3
 0000-                 23
 8000-                 24               .OR     $8000
 8000-                 25               .TA     $0000
@@ -60,11 +60,12 @@
 8036-            I    30       ; SUBROUTINE 'INITKEY'
 8036-            I    31       ; TAKES CARE OF INITIALIZING VIA #3 FOR USING WITH THE GETKEY ROUTINE FROM
 8036-            I    32       ; THE CODE.
-8036-A9 00       I    33 (  2) INITKEY LDA     #0
-8038-8D 03 4C    I    34 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
-803B-A9 FF       I    35 (  2)         LDA     #$FF
-803D-8D 02 4C    I    36 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
-8040-60          I    37 (  6)         RTS
+8036-            I    33       ;
+8036-A9 00       I    34 (  2) INITKEY LDA     #0
+8038-8D 03 4C    I    35 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+803B-A9 FF       I    36 (  2)         LDA     #$FF
+803D-8D 02 4C    I    37 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
+8040-60          I    38 (  6)         RTS
 8041-                 34       ;
 8041-                 35       ; STORE CPU INITIALIZATION VECTORS AT THE END OF THE EEPROM.
 8041-                 36       ;
