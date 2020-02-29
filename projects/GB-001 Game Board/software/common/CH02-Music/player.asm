@@ -1,0 +1,157 @@
+;   MUSIC PLAYER PROGRAM
+;   USES 16-KEY KEYBOARD AND BUFFERED SPEAKER
+; PROGRAM PLAYS STORED MUSICAL NOTES. THERE ARE TWO MODES OF OPERATION: INPUT
+; AND PLAY. INPUT MODE IS THE DEFAULT, AND ALL NON-COMMAND KEYS PRESSED PRESSED
+; (0-D) ARE STORED FOR REPLAY. IF AN OVERFLOW OCCURS, THE USER IS WARMED WITH
+; A THREE-TONE WARNING. THE SAME WARBLING TONE IS ALSO USED TO SIGNAL A RESTART
+; OF THE PROGRAM.
+;
+PILEN   .EQ     $00         ; LENGTH OF NOTE LIST
+TEMP    .EQ     $01         ; TEMPORARY STORAGE
+PTR     .EQ     $02         ; CURRENT LOCATION IN LIST
+FREQ    .EQ     $03         ; TEMPORARY STORAGE FOR FREQUENCY
+DUR     .EQ     $04         ; TEMP STORAGE FOR DURATION
+TABEG   .EQ     $0300       ; TABLE TO STORE MUSIC
+PORT3B  .EQ     $CC00       ; VIA OUTPUT PORT B
+DDR3B   .EQ     $CC02       ; VIA PORT B DIRECTION REGISTER
+;
+; COMMAND LINE INTERPRETER
+;  $F AS INPUT MEANS RESET POINTERS, START OVER.
+;  $E MEANS PLAY CURRENTLY STORED NOTES
+;  ANYTHING ELSE IS STORED FOR REPLAY.
+;
+START   LDA     #0          ; CLEAR NOTE LIST LENGTH
+        STA     PILEN
+        CLC                 ; CLEAR NIBBLE MARKER
+NXKEY   JSR     GETKEY
+        CMP     #15         ; IS KEY #15?
+        BNE     NXTST       ; NO, DO NEXT TEST
+        JSR     BEEP3       ; TELL USER OF CLEARING
+        BCC     START       ; CLEAR POINTERS AND START OVER
+NXTST   CMP     #14         ; IS KEY #14?
+        BNE     NUMKEY      ; NO, KEY IS NOTE NUMBER
+        JSR     PLAYEM      ; PLAY NOTES
+        CLC
+        BCC     NXKEY       ; GET NEXT COMMAND
+;
+; ROUTINE TO LOAD NOT LIST WITH NOTES
+;
+NUMKEY  STA     TEMP        ; SAVE KEY, FREE A
+        JSR     PLAYIT      ; PLAY NOTE
+        LDA     PILEN       ; GET LIST LENGTH
+        CMP     #$FF        ; OVERFLOW?
+        BNE     OK          ; NO, ADD NOTE TO LIST
+        JSR     BEEP3       ; YES, WARN USER
+        BCC     NXKEY       ; RETURN TO INPUT MODE
+OK      LSR     A           ; SHIFT LOW BIT INTO NIBBLE POINTER
+        TAY                 ; USE SHIFTED NIBBLE POINTER AS BYTE INDEX
+        LDA     TEMP        ; RESTORE KEY#
+        BCS     FINBYT      ; IF BYTE ALREADY HAS A NIBBLE, FINISH IT AND STORE
+        AND     #%00001111  ;  1ST NIBBLE. MASK HIGH NIBBLE
+        STA     TABEG,Y     ; SAVE UNFINISHED 1/2 BYTE
+        INC     PILEN       ; POINT TO NEXT NIBBLE
+        BCC     NXKEY       ; GET NEXT KEYSTROKE
+FINBYT  ASL     A           ; SHIFT NIBBLE 2 TO HIGH ORDER
+        ASL     A
+        ASL     A
+        ASL     A
+        ORA     TABEG,Y     ; JOIN 2 NIBBLES AS BYTE
+        STA     TABEG,Y     ; ... AND STORE.
+        INC     PILEN       ; POINT TO NEXT NIBBLE IN NEXT BYTE
+        BCC     NXKEY       ; RETURN
+;
+; ROUTINE TO PLAY NOTES
+;
+PLAYEM  LDX     #0          ; CLEAR POINTER
+        STX     PTR
+        LDA     PTR         ; LOAD ACCUMULATOR WITH CURRENT POINTER VALUE
+LOOP    LSR     A           ; SHIFT NIBBLE INDICATOR INTO CARRY
+        TAX                 ; USE SHIFTED NIBBLE POINTER AS BYTE POINTER
+        LDA     TABEG,X     ; LOAD NOTE TO PLAY
+        BCS     ENDBYT      ; LOW NIBBLE USED, GET HIGH
+        AND     #%00001111  ; MASK OUT HIGH BITS
+        BCC     FINISH      ; PLAY NOTE
+ENDBYT  AND     #%11110000  ; THROW AWAY LOW NIBBLE
+        LSR     A           ; SHIFT INTO LOW
+        LSR     A
+        LSR     A
+        LSR     A
+FINISH  JSR     PLAYIT      ; CALCULATE CONSTANTS & PLAY
+        LDX     #$20        ; BETWEEN-NOTE DELAY
+        JSR     DELAY
+        INC     PTR         ; ONE NIBBLE USED
+        LDA     PTR
+        CMP     PILEN       ; END OF LIST?
+        BCC     LOOP        ; NO, GET NEXT NOTE
+        RTS                 ; DONE
+;
+; ROUTINE TO DO TABLE LOOK UP, SEPARATE REST
+;
+PLAYIT  CMP     #13         ; REST?
+        BNE     SOUND       ; NO.
+        LDX     #$54        ; DELAY = NOTE LENGTH = .21SEC
+        JSR     DELAY
+        RTS
+SOUND   TAX                 ; USE KEYS AS INDEX..
+        LDA     DURTAB,X    ;  ... TO FIND DURATION.
+        STA     DUR         ; STORE DURATION FOR USE
+        LDA     NOTAB,X     ; LOAD NOTE VALUE
+        JSR     TONE
+        RTS
+;
+; ROUTINE TO MAKE 3 TONE SIGNAL
+;
+BEEP3   LDA     #$FF        ; DURATION FOR BEEPS
+        STA     DUR
+        LDA     #$4B        ; CODE FOR E2
+        JSR     TONE        ; 1ST NOTE
+        LDA     #$38        ; CODE FOR D2
+        JSR     TONE
+        LDA     #$4B
+        JSR     TONE
+        CLC
+        RTS
+;
+; VARIABLE-LENGTH DELAY
+;
+DELAY   LDY     #$FF
+DLY     NOP
+        BNE     DL0         ; (.+2 IN BOOK)
+DL0     DEY
+        BNE     DLY         ; 10 US. LOOP
+        DEX
+        BNE     DELAY       ; LOOP TIME = 2556*[X]
+        RTS
+;
+; ROUTINE TO MAKE TONE: # OF 1/2 CYCLES IS IN 'DUR', AND 1/2 CYCLE TIME IS IN
+; ACCUMULATOR. LOOP TIME = 20*[A]+26 US SINCE TWO RUNS THROUGH THE OUTER LOOP
+; MAKES ONE CYCLE OF THE TONE.
+;
+TONE    STA     FREQ        ; FREQ IS TEMP FOR # OF CYCLES
+        LDA     #$FF        ; SET UP DATA DIRECTION REGISTER
+        STA     DDR3B
+        LDA     #$00        ; A IS SENT TO PORT, START HI
+        LDX     DUR
+FL2     LDY     FREQ
+FL1     DEY
+        CLC
+        BCC     FL0         ; (.+2 IN BOOK)
+FL0     BNE     FL1         ; INNER, 10 US LOOP.
+        EOR     #$FF        ; COMPLEMENT I/O PORT
+        STA     PORT3B      ; ... AND SET IT
+        DEX
+        BNE     FL2         ; OUTER LOOP
+        RTS
+;
+; TABLE OF NOTE CONSTANTS
+; CONTAINS:
+; [OCTAVE BELOW MIDDLE C] : G,A,BCC
+; [OCTAVE OF MIDDLE C] : C,D,E,F,F#,G,G#,A,B
+; [OCTAVE ABOVE MIDDLE C] : C
+;
+NOTAB   .HS     FE.E2.C9.BE.A9.96.8E.86.7E.77.70.64.5E
+;
+; TABLE OF NOTE DURATIONS IN # OF 1/2 CYCLES SET FOR A NOTE LENGTH OF
+; ABOUT .21 SEC.
+;
+DURTAB  .HS     55.60.6B.72.80.8F.94.A1.AA.B5.BF.D7.E4

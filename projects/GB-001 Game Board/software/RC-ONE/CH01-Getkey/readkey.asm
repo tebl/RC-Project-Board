@@ -1,0 +1,32 @@
+        .CR     6502
+        .TF     readkey.hex,hex
+        .LF     readkey.list
+;
+; SMALL PROGRAM FOR THE KIM-1 COMPUTER THAT SEEKS TO DEMONSTRATE THE GET KEY
+; ROUTINE FROM CH1 - ESSENTIALLY WE ATTEMPT TO READ THE KEY AND JUST OUTPUT
+; IT ONTO THE DISPLAYS. THE BOOK DETAILS THE USE OF A SYM-1 COMPUTER, SO
+; WHATEVER BUGS YOU MAY FIND CAN BE BLAMED ON ME AND NOT THE AUTHOR OF THE
+; BOOK.
+;
+        .OR     $0200
+        .TA     $0200
+POINTL  .EQ     $FA         ; ADDRESS LO ON DISPLAY
+POINTH  .EQ     $FB         ; ADDRESS HI ON DISPLAY
+INH     .EQ     $F9         ; INPUTBUFFER HI
+SCANDS  .EQ     $1F1F       ; MONITOR FUNCTION TO OUTPUT A DIGIT
+
+RC_ONE  LDA     #0
+        STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+        LDA     #$FF
+        STA     DDR3B       ; SET KEYS FOR OUTPUT
+        LDA     #0
+        STA     POINTH
+        STA     POINTL
+        STA     INH
+LOOP    JSR     GETKEY      ; GET THE KEY USING THE SUB-ROUTINE FROM THE BOOK,
+        STA     INH         ;  WE'LL HAVE IT IN A SO STORE IT TO DATA DIGITS.
+        JSR     SCANDS      ; HAVE THE MONITOR OUTPUT THE VALUE
+        JMP     LOOP        ; DO IT ALL AGAIN
+
+        .IN     ../../common/CH01-Getkey/getkey_routine.asm
+
