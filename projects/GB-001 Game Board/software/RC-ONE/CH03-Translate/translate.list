@@ -50,26 +50,26 @@ CC03-            I    17       DDR3A   .EQ     VIA3+3
 0208-8D 02 CC    I    38 (  4)         STA     DDR3B
 020B-A9 00       I    39 (  2)         LDA     #0
 020D-8D 03 CC    I    40 (  4)         STA     DDR3A
-0210-85 05       I    41 (  2)         STA     PLYR1       ; CLEAR NUMBER OF WINS.
-0212-85 06       I    42 (  2)         STA     PLYR2
+0210-85 05       I    41 (  3)         STA     PLYR1       ; CLEAR NUMBER OF WINS.
+0212-85 06       I    42 (  3)         STA     PLYR2
 0214-A9 79       I    43 (  2) MOVE    LDA     #%01111001
 0216-8D 01 C0    I    44 (  4)         STA     PORT1A      ; SHOW RIGHT ARROW
 0219-A9 00       I    45 (  2)         LDA     #0
 021B-8D 00 C0    I    46 (  4)         STA     PORT1B
-021E-85 02       I    47 (  2)         STA     CNTLO       ; CLEAR COUNTERS
-0220-85 01       I    48 (  2)         STA     CNTHI
+021E-85 02       I    47 (  3)         STA     CNTLO       ; CLEAR COUNTERS
+0220-85 01       I    48 (  3)         STA     CNTHI
 0222-20 8C 02    I    49 (  6)         JSR     PLAY        ; GET PLAYER 1S TIME.
 0225-A5 02       I    50 (  3)         LDA     CNTLO       ; TRANSFER TEMP COUNT TO PERMANENT STORAGE
-0227-85 04       I    51 (  2)         STA     CNT1L
+0227-85 04       I    51 (  3)         STA     CNT1L
 0229-A5 01       I    52 (  3)         LDA     CNTHI
-022B-85 03       I    53 (  2)         STA     CNT1H
+022B-85 03       I    53 (  3)         STA     CNT1H
 022D-A9 3C       I    54 (  2)         LDA     #%00111100  ; SHOW LEFT ARROW
 022F-8D 01 C0    I    55 (  4)         STA     PORT1A
 0232-A9 01       I    56 (  2)         LDA     #1
 0234-8D 00 C0    I    57 (  4)         STA     PORT1B
 0237-A9 00       I    58 (  2)         LDA     #0
-0239-85 02       I    59 (  2)         STA     CNTLO       ; CLEAR COUNTERS
-023B-85 01       I    60 (  2)         STA     CNTHI
+0239-85 02       I    59 (  3)         STA     CNTLO       ; CLEAR COUNTERS
+023B-85 01       I    60 (  3)         STA     CNTHI
 023D-20 8C 02    I    61 (  6)         JSR     PLAY        ; GET PLAYER 2S TIME.
 0240-A5 01       I    62 (  3)         LDA     CNTHI       ; GET PLAYER 2S COUNT AND...
 0242-C5 03       I    63 (  3)         CMP     CNT1H       ;  COMPARE TO PLAYER 1S.
@@ -115,7 +115,7 @@ CC03-            I    17       DDR3A   .EQ     VIA3+3
 028F-20 E4 02    I   103 (  6)         JSR     DELAY       ; RANDOM - LENGTH DELAY.
 0292-20 F5 02    I   104 (  6)         JSR     RANDOM      ; GET ANOTHER
 0295-29 0F       I   105 (  2)         AND     #$0F        ; KEEP UNDER 16 FOR USE AS
-0297-85 07       I   106 (  2)         STA     NUMBER      ;  NUMBER TO GUESS.
+0297-85 07       I   106 (  3)         STA     NUMBER      ;  NUMBER TO GUESS.
 0299-AA          I   107 (  2)         TAX                 ; USE AS INDEX TO ...
 029A-BD 08 03    I   108 ( 4*)         LDA     NUMTAB,X    ;  GET REVERSED PATTERN FROM TABLE
 029D-0D 00 C0    I   109 (  4)         ORA     PORT1B      ;  TO DISPLAY IN LEDS 12-15.
@@ -146,63 +146,64 @@ CC03-            I    17       DDR3A   .EQ     VIA3+3
 02CC-            I   134       ;
 02CC-            I   135       ; SUBROUTINE 'BLINK'
 02CC-            I   136       ; BLINKS LEDS WHOSE BITS ARE SET IN ACCUMULATOR ON ENTRY.
-02CC-A2 14       I   137 (  2) BLINK   LDX     #20         ; 20 BLINKS.
-02CE-86 01       I   138 (  3)         STX     CNTHI       ; SET BLINK COUNTER.
-02D0-85 02       I   139 (  2)         STA     CNTLO       ; BLINK REGISTER
-02D2-A5 02       I   140 (  3) BLOOP   LDA     CNTLO       ; GET BLINK PATTERN
-02D4-4D 00 C0    I   141 (  4)         EOR     PORT1B      ; BLINK LEDS.
-02D7-8D 00 C0    I   142 (  4)         STA     PORT1B
-02DA-A9 0A       I   143 (  2)         LDA     #10         ; SHORT DELAY
-02DC-20 E4 02    I   144 (  6)         JSR     DELAY
-02DF-C6 01       I   145 (  5)         DEC     CNTHI
-02E1-D0 EF       I   146 (2**)         BNE     BLOOP       ; LOOP IF NOT DONE.
-02E3-60          I   147 (  6)         RTS
-02E4-            I   148       ;
-02E4-            I   149       ; SUBROUTINE 'DELAY'
-02E4-            I   150       ; CONTENTS OF ACCUMULATOR DETERMINES DELAY LENGTH.
-02E4-            I   151       ;
-02E4-85 00       I   152 (  2) DELAY   STA     TEMP
-02E6-A0 10       I   153 (  2) DL1     LDY     #$10
-02E8-A2 FF       I   154 (  2) DL2     LDX     #$FF
-02EA-CA          I   155 (  2) DL3     DEX
-02EB-D0 FD       I   156 (2**)         BNE     DL3
-02ED-88          I   157 (  2)         DEY
-02EE-D0 F8       I   158 (2**)         BNE     DL2
-02F0-C6 00       I   159 (  5)         DEC     TEMP
-02F2-D0 F2       I   160 (2**)         BNE     DL1
-02F4-60          I   161 (  6)         RTS
-02F5-            I   162       ;
-02F5-            I   163       ; SUBROUTINE 'RANDOM'
-02F5-            I   164       ; RANDOM NUMBER GENERATOR, RETURNS RANDOM NUMBER IN ACCUMULATOR.
-02F5-            I   165       ;
-02F5-38          I   166 (  2) RANDOM  SEC
-02F6-A5 09       I   167 (  3)         LDA     SCR+1
-02F8-65 0C       I   168 (  3)         ADC     SCR+4
-02FA-65 0D       I   169 (  3)         ADC     SCR+5
-02FC-85 08       I   170 (  2)         STA     SCR
-02FE-A2 04       I   171 (  2)         LDX     #4
-0300-B5 08       I   172 (  4) RNDLP   LDA     SCR,X
-0302-95 09       I   173 (  4)         STA     SCR+1,X
-0304-CA          I   174 (  2)         DEX
-0305-10 F9       I   175 (2**)         BPL     RNDLP
-0307-60          I   176 (  6)         RTS
-0308-            I   177       ;
-0308-            I   178       ; TABLE OF 'REVERSED' NUMBERS FOR DISPLAY
-0308-            I   179       ; IN BITS 3-8 OF PORT1B, OR LEDS 12-15.
-0308-            I   180       ;
-0308-02          I   181       NUMTAB  .DA     #%00000010
-0309-82          I   182               .DA     #%10000010
-030A-22          I   183               .DA     #%00100010
-030B-A2          I   184               .DA     #%10100010
-030C-12          I   185               .DA     #%00010010
-030D-92          I   186               .DA     #%10010010
-030E-32          I   187               .DA     #%00110010
-030F-B2          I   188               .DA     #%10110010
-0310-0A          I   189               .DA     #%00001010
-0311-8A          I   190               .DA     #%10001010
-0312-2A          I   191               .DA     #%00101010
-0313-AA          I   192               .DA     #%10101010
-0314-1A          I   193               .DA     #%00011010
-0315-9A          I   194               .DA     #%10011010
-0316-3A          I   195               .DA     #%00111010
-0317-BA          I   196               .DA     #%10111010
+02CC-            I   137       ;
+02CC-A2 14       I   138 (  2) BLINK   LDX     #20         ; 20 BLINKS.
+02CE-86 01       I   139 (  3)         STX     CNTHI       ; SET BLINK COUNTER.
+02D0-85 02       I   140 (  3)         STA     CNTLO       ; BLINK REGISTER
+02D2-A5 02       I   141 (  3) BLOOP   LDA     CNTLO       ; GET BLINK PATTERN
+02D4-4D 00 C0    I   142 (  4)         EOR     PORT1B      ; BLINK LEDS.
+02D7-8D 00 C0    I   143 (  4)         STA     PORT1B
+02DA-A9 0A       I   144 (  2)         LDA     #10         ; SHORT DELAY
+02DC-20 E4 02    I   145 (  6)         JSR     DELAY
+02DF-C6 01       I   146 (  5)         DEC     CNTHI
+02E1-D0 EF       I   147 (2**)         BNE     BLOOP       ; LOOP IF NOT DONE.
+02E3-60          I   148 (  6)         RTS
+02E4-            I   149       ;
+02E4-            I   150       ; SUBROUTINE 'DELAY'
+02E4-            I   151       ; CONTENTS OF ACCUMULATOR DETERMINES DELAY LENGTH.
+02E4-            I   152       ;
+02E4-85 00       I   153 (  3) DELAY   STA     TEMP
+02E6-A0 10       I   154 (  2) DL1     LDY     #$10
+02E8-A2 FF       I   155 (  2) DL2     LDX     #$FF
+02EA-CA          I   156 (  2) DL3     DEX
+02EB-D0 FD       I   157 (2**)         BNE     DL3
+02ED-88          I   158 (  2)         DEY
+02EE-D0 F8       I   159 (2**)         BNE     DL2
+02F0-C6 00       I   160 (  5)         DEC     TEMP
+02F2-D0 F2       I   161 (2**)         BNE     DL1
+02F4-60          I   162 (  6)         RTS
+02F5-            I   163       ;
+02F5-            I   164       ; SUBROUTINE 'RANDOM'
+02F5-            I   165       ; RANDOM NUMBER GENERATOR, RETURNS RANDOM NUMBER IN ACCUMULATOR.
+02F5-            I   166       ;
+02F5-38          I   167 (  2) RANDOM  SEC
+02F6-A5 09       I   168 (  3)         LDA     SCR+1
+02F8-65 0C       I   169 (  3)         ADC     SCR+4
+02FA-65 0D       I   170 (  3)         ADC     SCR+5
+02FC-85 08       I   171 (  3)         STA     SCR
+02FE-A2 04       I   172 (  2)         LDX     #4
+0300-B5 08       I   173 (  4) RNDLP   LDA     SCR,X
+0302-95 09       I   174 (  4)         STA     SCR+1,X
+0304-CA          I   175 (  2)         DEX
+0305-10 F9       I   176 (2**)         BPL     RNDLP
+0307-60          I   177 (  6)         RTS
+0308-            I   178       ;
+0308-            I   179       ; TABLE OF 'REVERSED' NUMBERS FOR DISPLAY
+0308-            I   180       ; IN BITS 3-8 OF PORT1B, OR LEDS 12-15.
+0308-            I   181       ;
+0308-02          I   182       NUMTAB  .DA     #%00000010
+0309-82          I   183               .DA     #%10000010
+030A-22          I   184               .DA     #%00100010
+030B-A2          I   185               .DA     #%10100010
+030C-12          I   186               .DA     #%00010010
+030D-92          I   187               .DA     #%10010010
+030E-32          I   188               .DA     #%00110010
+030F-B2          I   189               .DA     #%10110010
+0310-0A          I   190               .DA     #%00001010
+0311-8A          I   191               .DA     #%10001010
+0312-2A          I   192               .DA     #%00101010
+0313-AA          I   193               .DA     #%10101010
+0314-1A          I   194               .DA     #%00011010
+0315-9A          I   195               .DA     #%10011010
+0316-3A          I   196               .DA     #%00111010
+0317-BA          I   197               .DA     #%10111010

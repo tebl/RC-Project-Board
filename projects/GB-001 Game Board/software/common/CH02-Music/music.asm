@@ -9,8 +9,13 @@
 ;
 VIA1    .EQ     $C000
 VIA3    .EQ     $CC00
+DDR3A   .EQ     VIA3+3      ; USING RC-ONE ADDRESS DECODING SCHEME, PLACING
+DDR3B   .EQ     VIA3+2      ;  VIA3 AT $CC00 BY DEFAULT (INSTEAD OF $AC00)
+PORT3A  .EQ     VIA3+1      ;  TO FIT RC-ONE ADDRESS DECODING THOUGH ORIGINAL
+PORT3B  .EQ     VIA3        ;  CAN BE JUMPERED IF NEEDED/WANTED.    
 
         .OR     $0200
         .TA     $0200
+BEGIN   JSR     INITKEY
         .IN     player.asm
         .IN     ../CH01-Getkey/getkey_routine.asm

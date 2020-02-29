@@ -1,0 +1,224 @@
+0000-                  4       ;
+0000-                  5       ; MUSIC PLAYER FOR THE BE6502 USING '6502 GAMES' HARDWARE. BOARD SHOULD BE
+0000-                  6       ; JUMPERED WITH VIA CHIPS AT THE ADDRESSES SPECIFIED BELOW. OTHER THAN THAT
+0000-                  7       ; THE CODE IS UNCHANGED FROM THE BOOK.
+0000-                  8       ;
+4000-                  9       VIA1    .EQ     $4000       ; GAME BOARD (VIA #1)
+4C00-                 10       VIA3    .EQ     $4C00       ; GAME BOARD (VIA #3)
+4C03-                 11       DDR3A   .EQ     VIA3+3
+4C02-                 12       DDR3B   .EQ     VIA3+2
+4C01-                 13       PORT3A  .EQ     VIA3+1
+4C00-                 14       PORT3B  .EQ     VIA3
+0000-                 15
+8000-                 16               .OR     $8000
+8000-                 17               .TA     $0000
+8000-20 06 81         18 (  6) BE6502  JSR     INITKEY
+8003-                 19               .IN     ../../common/CH02-Music/player.asm
+8003-            I     1       ;   MUSIC PLAYER PROGRAM
+8003-            I     2       ;   USES 16-KEY KEYBOARD AND BUFFERED SPEAKER
+8003-            I     3       ; PROGRAM PLAYS STORED MUSICAL NOTES. THERE ARE TWO MODES OF OPERATION: INPUT
+8003-            I     4       ; AND PLAY. INPUT MODE IS THE DEFAULT, AND ALL NON-COMMAND KEYS PRESSED PRESSED
+8003-            I     5       ; (0-D) ARE STORED FOR REPLAY. IF AN OVERFLOW OCCURS, THE USER IS WARNED WITH
+8003-            I     6       ; A THREE-TONE WARNING. THE SAME WARBLING TONE IS ALSO USED TO SIGNAL A RESTART
+8003-            I     7       ; OF THE PROGRAM.
+8003-            I     8       ;
+0000-            I     9       PILEN   .EQ     $00         ; LENGTH OF NOTE LIST
+0001-            I    10       TEMP    .EQ     $01         ; TEMPORARY STORAGE
+0002-            I    11       PTR     .EQ     $02         ; CURRENT LOCATION IN LIST
+0003-            I    12       FREQ    .EQ     $03         ; TEMPORARY STORAGE FOR FREQUENCY
+0004-            I    13       DUR     .EQ     $04         ; TEMP STORAGE FOR DURATION
+0300-            I    14       TABEG   .EQ     $0300       ; TABLE TO STORE MUSIC
+4C00-            I    15       PORT3B  .EQ     VIA3        ; VIA OUTPUT PORT B
+4C02-            I    16       DDR3B   .EQ     VIA3+2      ; VIA PORT B DIRECTION REGISTER
+8003-            I    17       ;
+8003-            I    18       ; COMMAND LINE INTERPRETER
+8003-            I    19       ;  $F AS INPUT MEANS RESET POINTERS, START OVER.
+8003-            I    20       ;  $E MEANS PLAY CURRENTLY STORED NOTES
+8003-            I    21       ;  ANYTHING ELSE IS STORED FOR REPLAY.
+8003-            I    22       ;
+8003-A9 00       I    23 (  2) START   LDA     #0          ; CLEAR NOTE LIST LENGTH
+8005-85 00       I    24 (  2)         STA     PILEN
+8007-18          I    25 (  2)         CLC                 ; CLEAR NIBBLE MARKER
+8008-20 E1 80    I    26 (  6) NXKEY   JSR     GETKEY
+800B-C9 0F       I    27 (  2)         CMP     #15         ; IS KEY #15?
+800D-D0 05       I    28 (2**)         BNE     NXTST       ; NO, DO NEXT TEST
+800F-20 8A 80    I    29 (  6)         JSR     BEEP3       ; TELL USER OF CLEARING
+8012-90 EF       I    30 (2**)         BCC     START       ; CLEAR POINTERS AND START OVER
+8014-C9 0E       I    31 (  2) NXTST   CMP     #14         ; IS KEY #14?
+8016-D0 06       I    32 (2**)         BNE     NUMKEY      ; NO, KEY IS NOTE NUMBER
+8018-20 4B 80    I    33 (  6)         JSR     PLAYEM      ; PLAY NOTES
+801B-18          I    34 (  2)         CLC
+801C-90 EA       I    35 (2**)         BCC     NXKEY       ; GET NEXT COMMAND
+801E-            I    36       ;
+801E-            I    37       ; ROUTINE TO LOAD NOT LIST WITH NOTES
+801E-            I    38       ;
+801E-85 01       I    39 (  2) NUMKEY  STA     TEMP        ; SAVE KEY, FREE A
+8020-20 73 80    I    40 (  6)         JSR     PLAYIT      ; PLAY NOTE
+8023-A5 00       I    41 (  3)         LDA     PILEN       ; GET LIST LENGTH
+8025-C9 FF       I    42 (  2)         CMP     #$FF        ; OVERFLOW?
+8027-D0 05       I    43 (2**)         BNE     OK          ; NO, ADD NOTE TO LIST
+8029-20 8A 80    I    44 (  6)         JSR     BEEP3       ; YES, WARN USER
+802C-90 DA       I    45 (2**)         BCC     NXKEY       ; RETURN TO INPUT MODE
+802E-4A          I    46 (  2) OK      LSR     A           ; SHIFT LOW BIT INTO NIBBLE POINTER
+802F-A8          I    47 (  2)         TAY                 ; USE SHIFTED NIBBLE POINTER AS BYTE INDEX
+8030-A5 01       I    48 (  3)         LDA     TEMP        ; RESTORE KEY#
+8032-B0 09       I    49 (2**)         BCS     FINBYT      ; IF BYTE ALREADY HAS A NIBBLE, FINISH IT AND STORE
+8034-29 0F       I    50 (  2)         AND     #%00001111  ;  1ST NIBBLE. MASK HIGH NIBBLE
+8036-99 00 03    I    51 (  5)         STA     TABEG,Y     ; SAVE UNFINISHED 1/2 BYTE
+8039-E6 00       I    52 (  5)         INC     PILEN       ; POINT TO NEXT NIBBLE
+803B-90 CB       I    53 (2**)         BCC     NXKEY       ; GET NEXT KEYSTROKE
+803D-0A          I    54 (  2) FINBYT  ASL     A           ; SHIFT NIBBLE 2 TO HIGH ORDER
+803E-0A          I    55 (  2)         ASL     A
+803F-0A          I    56 (  2)         ASL     A
+8040-0A          I    57 (  2)         ASL     A
+8041-19 00 03    I    58 ( 4*)         ORA     TABEG,Y     ; JOIN 2 NIBBLES AS BYTE
+8044-99 00 03    I    59 (  5)         STA     TABEG,Y     ; ... AND STORE.
+8047-E6 00       I    60 (  5)         INC     PILEN       ; POINT TO NEXT NIBBLE IN NEXT BYTE
+8049-90 BD       I    61 (2**)         BCC     NXKEY       ; RETURN
+804B-            I    62       ;
+804B-            I    63       ; ROUTINE TO PLAY NOTES
+804B-            I    64       ;
+804B-A2 00       I    65 (  2) PLAYEM  LDX     #0          ; CLEAR POINTER
+804D-86 02       I    66 (  3)         STX     PTR
+804F-A5 02       I    67 (  3)         LDA     PTR         ; LOAD ACCUMULATOR WITH CURRENT POINTER VALUE
+8051-4A          I    68 (  2) LOOP    LSR     A           ; SHIFT NIBBLE INDICATOR INTO CARRY
+8052-AA          I    69 (  2)         TAX                 ; USE SHIFTED NIBBLE POINTER AS BYTE POINTER
+8053-BD 00 03    I    70 ( 4*)         LDA     TABEG,X     ; LOAD NOTE TO PLAY
+8056-B0 04       I    71 (2**)         BCS     ENDBYT      ; LOW NIBBLE USED, GET HIGH
+8058-29 0F       I    72 (  2)         AND     #%00001111  ; MASK OUT HIGH BITS
+805A-90 06       I    73 (2**)         BCC     FINISH      ; PLAY NOTE
+805C-29 F0       I    74 (  2) ENDBYT  AND     #%11110000  ; THROW AWAY LOW NIBBLE
+805E-4A          I    75 (  2)         LSR     A           ; SHIFT INTO LOW
+805F-4A          I    76 (  2)         LSR     A
+8060-4A          I    77 (  2)         LSR     A
+8061-4A          I    78 (  2)         LSR     A
+8062-20 73 80    I    79 (  6) FINISH  JSR     PLAYIT      ; CALCULATE CONSTANTS & PLAY
+8065-A2 20       I    80 (  2)         LDX     #$20        ; BETWEEN-NOTE DELAY
+8067-20 9F 80    I    81 (  6)         JSR     DELAY
+806A-E6 02       I    82 (  5)         INC     PTR         ; ONE NIBBLE USED
+806C-A5 02       I    83 (  3)         LDA     PTR
+806E-C5 00       I    84 (  3)         CMP     PILEN       ; END OF LIST?
+8070-90 DF       I    85 (2**)         BCC     LOOP        ; NO, GET NEXT NOTE
+8072-60          I    86 (  6)         RTS                 ; DONE
+8073-            I    87       ;
+8073-            I    88       ; ROUTINE TO DO TABLE LOOK UP, SEPARATE REST
+8073-            I    89       ;
+8073-C9 0D       I    90 (  2) PLAYIT  CMP     #13         ; REST?
+8075-D0 06       I    91 (2**)         BNE     SOUND       ; NO.
+8077-A2 54       I    92 (  2)         LDX     #$54        ; DELAY = NOTE LENGTH = .21SEC
+8079-20 9F 80    I    93 (  6)         JSR     DELAY
+807C-60          I    94 (  6)         RTS
+807D-AA          I    95 (  2) SOUND   TAX                 ; USE KEYS AS INDEX..
+807E-BD D4 80    I    96 ( 4*)         LDA     DURTAB,X    ;  ... TO FIND DURATION.
+8081-85 04       I    97 (  2)         STA     DUR         ; STORE DURATION FOR USE
+8083-BD C7 80    I    98 ( 4*)         LDA     NOTAB,X     ; LOAD NOTE VALUE
+8086-20 AB 80    I    99 (  6)         JSR     TONE
+8089-60          I   100 (  6)         RTS
+808A-            I   101       ;
+808A-            I   102       ; ROUTINE TO MAKE 3 TONE SIGNAL
+808A-            I   103       ;
+808A-A9 FF       I   104 (  2) BEEP3   LDA     #$FF        ; DURATION FOR BEEPS
+808C-85 04       I   105 (  2)         STA     DUR
+808E-A9 4B       I   106 (  2)         LDA     #$4B        ; CODE FOR E2
+8090-20 AB 80    I   107 (  6)         JSR     TONE        ; 1ST NOTE
+8093-A9 38       I   108 (  2)         LDA     #$38        ; CODE FOR D2
+8095-20 AB 80    I   109 (  6)         JSR     TONE
+8098-A9 4B       I   110 (  2)         LDA     #$4B
+809A-20 AB 80    I   111 (  6)         JSR     TONE
+809D-18          I   112 (  2)         CLC
+809E-60          I   113 (  6)         RTS
+809F-            I   114       ;
+809F-            I   115       ; VARIABLE-LENGTH DELAY
+809F-            I   116       ;
+809F-A0 FF       I   117 (  2) DELAY   LDY     #$FF
+80A1-EA          I   118 (  2) DLY     NOP
+80A2-D0 00       I   119 (2**)         BNE     DL0         ; (.+2 IN BOOK)
+80A4-88          I   120 (  2) DL0     DEY
+80A5-D0 FA       I   121 (2**)         BNE     DLY         ; 10 US. LOOP
+80A7-CA          I   122 (  2)         DEX
+80A8-D0 F5       I   123 (2**)         BNE     DELAY       ; LOOP TIME = 2556*[X]
+80AA-60          I   124 (  6)         RTS
+80AB-            I   125       ;
+80AB-            I   126       ; ROUTINE TO MAKE TONE: # OF 1/2 CYCLES IS IN 'DUR', AND 1/2 CYCLE TIME IS IN
+80AB-            I   127       ; ACCUMULATOR. LOOP TIME = 20*[A]+26 US SINCE TWO RUNS THROUGH THE OUTER LOOP
+80AB-            I   128       ; MAKES ONE CYCLE OF THE TONE.
+80AB-            I   129       ;
+80AB-85 03       I   130 (  2) TONE    STA     FREQ        ; FREQ IS TEMP FOR # OF CYCLES
+80AD-A9 FF       I   131 (  2)         LDA     #$FF        ; SET UP DATA DIRECTION REGISTER
+80AF-8D 02 4C    I   132 (  4)         STA     DDR3B
+80B2-A9 00       I   133 (  2)         LDA     #$00        ; A IS SENT TO PORT, START HI
+80B4-A6 04       I   134 (  3)         LDX     DUR
+80B6-A4 03       I   135 (  3) FL2     LDY     FREQ
+80B8-88          I   136 (  2) FL1     DEY
+80B9-18          I   137 (  2)         CLC
+80BA-90 00       I   138 (2**)         BCC     FL0         ; (.+2 IN BOOK)
+80BC-D0 FA       I   139 (2**) FL0     BNE     FL1         ; INNER, 10 US LOOP.
+80BE-49 FF       I   140 (  2)         EOR     #$FF        ; COMPLEMENT I/O PORT
+80C0-8D 00 4C    I   141 (  4)         STA     PORT3B      ; ... AND SET IT
+80C3-CA          I   142 (  2)         DEX
+80C4-D0 F0       I   143 (2**)         BNE     FL2         ; OUTER LOOP
+80C6-60          I   144 (  6)         RTS
+80C7-            I   145       ;
+80C7-            I   146       ; TABLE OF NOTE CONSTANTS
+80C7-            I   147       ; CONTAINS:
+80C7-            I   148       ; [OCTAVE BELOW MIDDLE C] : G,A,BCC
+80C7-            I   149       ; [OCTAVE OF MIDDLE C] : C,D,E,F,F#,G,G#,A,B
+80C7-            I   150       ; [OCTAVE ABOVE MIDDLE C] : C
+80C7-            I   151       ;
+80C7-FE E2 C9 BE 
+     A9 96 8E 86 
+     7E 77 70 64 
+     5E          I   152       NOTAB   .HS     FE.E2.C9.BE.A9.96.8E.86.7E.77.70.64.5E
+80D4-            I   153       ;
+80D4-            I   154       ; TABLE OF NOTE DURATIONS IN # OF 1/2 CYCLES SET FOR A NOTE LENGTH OF
+80D4-            I   155       ; ABOUT .21 SEC.
+80D4-            I   156       ;
+80D4-55 60 6B 72 
+     80 8F 94 A1 
+     AA B5 BF D7 
+     E4          I   157       DURTAB  .HS     55.60.6B.72.80.8F.94.A1.AA.B5.BF.D7.E4
+80E1-                 20               .IN     ../../common/CH01-Getkey/getkey_routine.asm
+80E1-            I     1       ; 'GETKEY' KEYBOARD INPUT ROUTINE READS AND DEBOUNCES KEYBOARD. RETURNS WITH
+80E1-            I     2       ; KEY NUMBER IN ACCUMULATOR IF KEY DOWN. OPERATION: SENDS NUMBERS 0-F TO 74154
+80E1-            I     3       ; (4 TO 16 LINE DECODER), WHICH GROUNDS ONE SIDE OF KEYSWITCHES ONE AT A TIME.
+80E1-            I     4       ; IF A KEY IS DOWN, PA7 OF VIA #3 WILL BE GROUNDED, AND THE CURRENT VALUE
+80E1-            I     5       ; APPLIED TO THE 74154 BE THE KEY NUMBER. WHEN THE PROGRAM DETECTS A KEY CLOSE
+80E1-            I     6       ; CHECKS FOR KEY CLOSURE FOR 50 MS. TO ELIMINATE BOUNCE.
+80E1-            I     7       ; NOTE: IF NO KEY IS PRESSED, GETKEY WILL WAIT.
+80E1-            I     8       ;
+80E1-2C 01 4C    I     9 (  4) GETKEY  BIT     PORT3A      ; SEE IF KEY IS STILL DOWN FROM LAST KEY CLOSURE:
+80E4-            I    10                                   ;  KEYSTROBE IN 'N' STATUS BIT.
+80E4-10 FB       I    11 (2**)         BPL     GETKEY      ; IF YES, WAIT FOR KEY RELEASE
+80E6-A2 0F       I    12 (  2) RSTART  LDX     #15         ; SET KEY COUNTER TO 15
+80E8-8E 00 4C    I    13 (  4) NXTKEY  STX     PORT3B      ; OUTPUT KEY # TO 74154
+80EB-2C 01 4C    I    14 (  4)         BIT     PORT3A      ; SEE IF KEY DOWN: STROBE IN 'N'
+80EE-10 05       I    15 (2**)         BPL     BOUNCE      ;  IF YES, GO DEBOUNCE
+80F0-CA          I    16 (  2)         DEX                 ;   DECREMENT KEY #
+80F1-10 F5       I    17 (2**)         BPL     NXTKEY      ;  NO, DO NEXT KEY
+80F3-30 F1       I    18 (2**)         BMI     RSTART      ; START OVER
+80F5-8A          I    19 (  2) BOUNCE  TXA                 ; SAVE KEY NUMBER IN A
+80F6-A0 12       I    20 (  2)         LDY     #$12        ; OUTER LOOP CNT LOAD FOR DELAY OF 50 MS.
+80F8-A2 FF       I    21 (  2) LP1     LDX     #$FF        ; INNER 11 US. LOOP
+80FA-2C 01 4C    I    22 (  4) LP2     BIT     PORT3A      ; SEE IF KEY STILL DOWN
+80FD-30 E7       I    23 (2**)         BMI     RSTART      ; IF NOT, KEY NOT VALID, RESTART
+80FF-CA          I    24 (  2)         DEX
+8100-D0 F8       I    25 (2**)         BNE     LP2         ; THIS LOOP USES 2115*5 US.
+8102-88          I    26 (  2)         DEY
+8103-D0 F3       I    27 (2**)         BNE     LP1         ; OUTER LOOP: TOTAL IS 50 MS.
+8105-60          I    28 (  6)         RTS                 ; DONE: KEY IN A.
+8106-            I    29       ;
+8106-            I    30       ; SUBROUTINE 'INITKEY'
+8106-            I    31       ; TAKES CARE OF INITIALIZING VIA #3 FOR USING WITH THE GETKEY ROUTINE FROM
+8106-            I    32       ; THE CODE.
+8106-A9 00       I    33 (  2) INITKEY LDA     #0
+8108-8D 03 4C    I    34 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+810B-A9 FF       I    35 (  2)         LDA     #$FF
+810D-8D 02 4C    I    36 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
+8110-60          I    37 (  6)         RTS
+8111-                 21       ;
+8111-                 22       ; STORE CPU INITIALIZATION VECTORS AT THE END OF THE EEPROM.
+8111-                 23       ;
+FFFA                 24               .NO     $FFFA,$FF
+FFFA-00 80            25               .DA     BE6502      ; NMI VECTOR
+FFFC-00 80            26               .DA     BE6502      ; RESET VECTOR
+FFFE-00 80            27               .DA     BE6502      ; IRQ VECTOR

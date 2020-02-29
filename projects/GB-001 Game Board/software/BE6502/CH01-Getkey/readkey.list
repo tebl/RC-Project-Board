@@ -1,0 +1,74 @@
+0000-                  4       ;
+0000-                  5       ; SMALL PROGRAM FOR THE BE6502 COMPUTER THAT SEEKS TO DEMONSTRATE THE GET KEY
+0000-                  6       ; ROUTINE FROM CH1 - ESSENTIALLY WE ATTEMPT TO READ THE KEY AND JUST OUTPUT
+0000-                  7       ; IT ONTO THE ONBOARD LEDS. THE BOOK ACTUALLY DETAILS THE USE OF A SYM-1
+0000-                  8       ; COMPUTER, SO WHATEVER BUGS YOU MAY FIND SHOULD PROBABLY BE BLAMED ON ME AND
+0000-                  9       ; NOT THE AUTHOR OF THE BOOK.
+0000-                 10       ;
+0000-                 11       ; NOTE THAT ALL OF THE PARTS BELONGING TO THE GAME BOARD ASSUMES A TIMING OF
+0000-                 12       ; 1 MHZ, SO ANY MANUAL CLOCKING AND SLOW CLOCKS ARE NOT APPLICABLE.
+0000-                 13       ;
+6000-                 14       VIA0    .EQ     $6000       ; VIA FOUND ON THE BE6502 ITSELF
+4000-                 15       VIA1    .EQ     $4000       ; GAME BOARD (VIA #1)
+4C00-                 16       VIA3    .EQ     $4C00       ; GAME BOARD (VIA #3)
+6000-                 17       PORT0B  .EQ     VIA0
+6002-                 18       DDR0B   .EQ     VIA0+2
+4C03-                 19       DDR3A   .EQ     VIA3+3      ; USING RC-ONE ADDRESS DECODING SCHEME, PLACING
+4C02-                 20       DDR3B   .EQ     VIA3+2      ;  VIA3 AT $CC00 BY DEFAULT (INSTEAD OF $AC00)
+4C01-                 21       PORT3A  .EQ     VIA3+1      ;  TO FIT RC-ONE ADDRESS DECODING THOUGH ORIGINAL
+4C00-                 22       PORT3B  .EQ     VIA3        ;  CAN BE JUMPERED IF NEEDED/WANTED.
+0000-                 23
+8000-                 24               .OR     $8000
+8000-                 25               .TA     $0000
+8000-A9 FF            26 (  2) BE6502  LDA     #$FF
+8002-8D 02 60         27 (  4)         STA     DDR0B
+8005-20 36 80         28 (  6)         JSR     INITKEY
+8008-20 11 80         29 (  6) LOOP    JSR     GETKEY      ; GET THE KEY USING THE SUB-ROUTINE FROM THE BOOK,
+800B-8D 00 60         30 (  4)         STA     PORT0B      ;  IT'LL BE IN IN A SO PUT ON LEDS FOR DISPLAY.
+800E-4C 08 80         31 (  3)         JMP     LOOP        ; DO IT ALL AGAIN
+8011-                 32
+8011-                 33               .IN     ../../common/CH01-Getkey/getkey_routine.asm
+8011-            I     1       ; 'GETKEY' KEYBOARD INPUT ROUTINE READS AND DEBOUNCES KEYBOARD. RETURNS WITH
+8011-            I     2       ; KEY NUMBER IN ACCUMULATOR IF KEY DOWN. OPERATION: SENDS NUMBERS 0-F TO 74154
+8011-            I     3       ; (4 TO 16 LINE DECODER), WHICH GROUNDS ONE SIDE OF KEYSWITCHES ONE AT A TIME.
+8011-            I     4       ; IF A KEY IS DOWN, PA7 OF VIA #3 WILL BE GROUNDED, AND THE CURRENT VALUE
+8011-            I     5       ; APPLIED TO THE 74154 BE THE KEY NUMBER. WHEN THE PROGRAM DETECTS A KEY CLOSE
+8011-            I     6       ; CHECKS FOR KEY CLOSURE FOR 50 MS. TO ELIMINATE BOUNCE.
+8011-            I     7       ; NOTE: IF NO KEY IS PRESSED, GETKEY WILL WAIT.
+8011-            I     8       ;
+8011-2C 01 4C    I     9 (  4) GETKEY  BIT     PORT3A      ; SEE IF KEY IS STILL DOWN FROM LAST KEY CLOSURE:
+8014-            I    10                                   ;  KEYSTROBE IN 'N' STATUS BIT.
+8014-10 FB       I    11 (2**)         BPL     GETKEY      ; IF YES, WAIT FOR KEY RELEASE
+8016-A2 0F       I    12 (  2) RSTART  LDX     #15         ; SET KEY COUNTER TO 15
+8018-8E 00 4C    I    13 (  4) NXTKEY  STX     PORT3B      ; OUTPUT KEY # TO 74154
+801B-2C 01 4C    I    14 (  4)         BIT     PORT3A      ; SEE IF KEY DOWN: STROBE IN 'N'
+801E-10 05       I    15 (2**)         BPL     BOUNCE      ;  IF YES, GO DEBOUNCE
+8020-CA          I    16 (  2)         DEX                 ;   DECREMENT KEY #
+8021-10 F5       I    17 (2**)         BPL     NXTKEY      ;  NO, DO NEXT KEY
+8023-30 F1       I    18 (2**)         BMI     RSTART      ; START OVER
+8025-8A          I    19 (  2) BOUNCE  TXA                 ; SAVE KEY NUMBER IN A
+8026-A0 12       I    20 (  2)         LDY     #$12        ; OUTER LOOP CNT LOAD FOR DELAY OF 50 MS.
+8028-A2 FF       I    21 (  2) LP1     LDX     #$FF        ; INNER 11 US. LOOP
+802A-2C 01 4C    I    22 (  4) LP2     BIT     PORT3A      ; SEE IF KEY STILL DOWN
+802D-30 E7       I    23 (2**)         BMI     RSTART      ; IF NOT, KEY NOT VALID, RESTART
+802F-CA          I    24 (  2)         DEX
+8030-D0 F8       I    25 (2**)         BNE     LP2         ; THIS LOOP USES 2115*5 US.
+8032-88          I    26 (  2)         DEY
+8033-D0 F3       I    27 (2**)         BNE     LP1         ; OUTER LOOP: TOTAL IS 50 MS.
+8035-60          I    28 (  6)         RTS                 ; DONE: KEY IN A.
+8036-            I    29       ;
+8036-            I    30       ; SUBROUTINE 'INITKEY'
+8036-            I    31       ; TAKES CARE OF INITIALIZING VIA #3 FOR USING WITH THE GETKEY ROUTINE FROM
+8036-            I    32       ; THE CODE.
+8036-A9 00       I    33 (  2) INITKEY LDA     #0
+8038-8D 03 4C    I    34 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+803B-A9 FF       I    35 (  2)         LDA     #$FF
+803D-8D 02 4C    I    36 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
+8040-60          I    37 (  6)         RTS
+8041-                 34       ;
+8041-                 35       ; STORE CPU INITIALIZATION VECTORS AT THE END OF THE EEPROM.
+8041-                 36       ;
+FFFA                 37               .NO     $FFFA,$FF
+FFFA-00 80            38               .DA     BE6502      ; NMI VECTOR
+FFFC-00 80            39               .DA     BE6502      ; RESET VECTOR
+FFFE-00 80            40               .DA     BE6502      ; IRQ VECTOR
