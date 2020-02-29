@@ -5,27 +5,29 @@
 0000-                  8       ; WHATEVER BUGS YOU MAY FIND CAN BE BLAMED ON ME AND NOT THE AUTHOR OF THE
 0000-                  9       ; BOOK.
 0000-                 10       ;
-0200-                 11               .OR     $0200
-0200-                 12               .TA     $0200
-00FA-                 13       POINTL  .EQ     $FA         ; ADDRESS LO ON DISPLAY
-00FB-                 14       POINTH  .EQ     $FB         ; ADDRESS HI ON DISPLAY
-00F9-                 15       INH     .EQ     $F9         ; INPUTBUFFER HI
-1F1F-                 16       SCANDS  .EQ     $1F1F       ; MONITOR FUNCTION TO OUTPUT A DIGIT
-0200-                 17
-0200-A9 00            18 (  2) RC_ONE  LDA     #0
-0202-8D 03 CC         19 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
-0205-A9 FF            20 (  2)         LDA     #$FF
-0207-8D 02 CC         21 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
-020A-A9 00            22 (  2)         LDA     #0
-020C-85 FB            23 (  2)         STA     POINTH
-020E-85 FA            24 (  2)         STA     POINTL
-0210-85 F9            25 (  2)         STA     INH
-0212-20 27 02         26 (  6) LOOP    JSR     GETKEY      ; GET THE KEY USING THE SUB-ROUTINE FROM THE BOOK,
-0215-85 F9            27 (  2)         STA     INH         ;  WE'LL HAVE IT IN A SO STORE IT TO DATA DIGITS.
-0217-20 1F 1F         28 (  6)         JSR     SCANDS      ; HAVE THE MONITOR OUTPUT THE VALUE
-021A-4C 12 02         29 (  3)         JMP     LOOP        ; DO IT ALL AGAIN
-021D-                 30
-021D-                 31               .IN     ../../common/CH01-Getkey/getkey_routine.asm
+00FA-                 11       POINTL  .EQ     $FA         ; ADDRESS LO ON DISPLAY
+00FB-                 12       POINTH  .EQ     $FB         ; ADDRESS HI ON DISPLAY
+00F9-                 13       INH     .EQ     $F9         ; INPUTBUFFER HI
+1F1F-                 14       SCANDS  .EQ     $1F1F       ; MONITOR FUNCTION TO OUTPUT A DIGIT
+C000-                 15       VIA1    .EQ     $C000
+CC00-                 16       VIA3    .EQ     $CC00
+0000-                 17
+0200-                 18               .OR     $0200
+0200-                 19               .TA     $0200
+0200-A9 00            20 (  2) RC_ONE  LDA     #0
+0202-8D 03 CC         21 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+0205-A9 FF            22 (  2)         LDA     #$FF
+0207-8D 02 CC         23 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
+020A-A9 00            24 (  2)         LDA     #0
+020C-85 FB            25 (  2)         STA     POINTH
+020E-85 FA            26 (  2)         STA     POINTL
+0210-85 F9            27 (  2)         STA     INH
+0212-20 27 02         28 (  6) LOOP    JSR     GETKEY      ; GET THE KEY USING THE SUB-ROUTINE FROM THE BOOK,
+0215-85 F9            29 (  2)         STA     INH         ;  WE'LL HAVE IT IN A SO STORE IT TO DATA DIGITS.
+0217-20 1F 1F         30 (  6)         JSR     SCANDS      ; HAVE THE MONITOR OUTPUT THE VALUE
+021A-4C 12 02         31 (  3)         JMP     LOOP        ; DO IT ALL AGAIN
+021D-                 32
+021D-                 33               .IN     ../../common/CH01-Getkey/getkey_routine.asm
 021D-            I     1       ; 'GETKEY' KEYBOARD INPUT ROUTINE READS AND DEBOUNCES KEYBOARD. RETURNS WITH
 021D-            I     2       ; KEY NUMBER IN ACCUMULATOR IF KEY DOWN. OPERATION: SENDS NUMBERS 0-F TO 74154
 021D-            I     3       ; (4 TO 16 LINE DECODER), WHICH GROUNDS ONE SIDE OF KEYSWITCHES ONE AT A TIME.
@@ -34,10 +36,10 @@
 021D-            I     6       ; CHECKS FOR KEY CLOSURE FOR 50 MS. TO ELIMINATE BOUNCE.
 021D-            I     7       ; NOTE: IF NO KEY IS PRESSED, GETKEY WILL WAIT.
 021D-            I     8       ;
-CC03-            I     9       DDR3A   .EQ     $CC03       ; USING RC-ONE ADDRESS DECODING SCHEME, PLACING
-CC02-            I    10       DDR3B   .EQ     $CC02       ;  VIA3 AT $CC00 BY DEFAULT (INSTEAD OF $AC00)
-CC01-            I    11       PORT3A  .EQ     $CC01       ;  TO FIT RC-ONE ADDRESS DECODING THOUGH ORIGINAL
-CC00-            I    12       PORT3B  .EQ     $CC00       ;  CAN BE JUMPERED IF NEEDED/WANTED.
+CC03-            I     9       DDR3A   .EQ     VIA3+3      ; USING RC-ONE ADDRESS DECODING SCHEME, PLACING
+CC02-            I    10       DDR3B   .EQ     VIA3+2      ;  VIA3 AT $CC00 BY DEFAULT (INSTEAD OF $AC00)
+CC01-            I    11       PORT3A  .EQ     VIA3+1      ;  TO FIT RC-ONE ADDRESS DECODING THOUGH ORIGINAL
+CC00-            I    12       PORT3B  .EQ     VIA3        ;  CAN BE JUMPERED IF NEEDED/WANTED.
 021D-            I    13
 021D-A9 00       I    14 (  2)         LDA     #0
 021F-8D 03 CC    I    15 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
@@ -63,4 +65,4 @@ CC00-            I    12       PORT3B  .EQ     $CC00       ;  CAN BE JUMPERED IF
 0248-88          I    35 (  2)         DEY
 0249-D0 F3       I    36 (2**)         BNE     LP1         ; OUTER LOOP: TOTAL IS 50 MS.
 024B-60          I    37 (  6)         RTS                 ; DONE: KEY IN A.
-024C-                 32
+024C-                 34

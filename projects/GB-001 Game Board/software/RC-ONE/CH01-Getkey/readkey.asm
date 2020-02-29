@@ -8,13 +8,15 @@
 ; WHATEVER BUGS YOU MAY FIND CAN BE BLAMED ON ME AND NOT THE AUTHOR OF THE
 ; BOOK.
 ;
-        .OR     $0200
-        .TA     $0200
 POINTL  .EQ     $FA         ; ADDRESS LO ON DISPLAY
 POINTH  .EQ     $FB         ; ADDRESS HI ON DISPLAY
 INH     .EQ     $F9         ; INPUTBUFFER HI
 SCANDS  .EQ     $1F1F       ; MONITOR FUNCTION TO OUTPUT A DIGIT
+VIA1    .EQ     $C000
+VIA3    .EQ     $CC00
 
+        .OR     $0200
+        .TA     $0200
 RC_ONE  LDA     #0
         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
         LDA     #$FF

@@ -1,41 +1,48 @@
-0000-                  4
-0400-                  5               .OR     $0400       ; NOTE: BOOK PLACES $0100 INSIDE STACK, BUT WE HAVE
-0400-                  6               .TA     $0400       ;  MORE MEMORY SO WE ASSEMBLE AT 0400 INSTEAD.
-0400-                  7               .IN     getkey_routine.asm
-0400-            I     1       ; 'GETKEY' KEYBOARD INPUT ROUTINE READS AND DEBOUNCES KEYBOARD. RETURNS WITH
-0400-            I     2       ; KEY NUMBER IN ACCUMULATOR IF KEY DOWN. OPERATION: SENDS NUMBERS 0-F TO 74154
-0400-            I     3       ; (4 TO 16 LINE DECODER), WHICH GROUNDS ONE SIDE OF KEYSWITCHES ONE AT A TIME.
-0400-            I     4       ; IF A KEY IS DOWN, PA7 OF VIA #3 WILL BE GROUNDED, AND THE CURRENT VALUE
-0400-            I     5       ; APPLIED TO THE 74154 BE THE KEY NUMBER. WHEN THE PROGRAM DETECTS A KEY CLOSE
-0400-            I     6       ; CHECKS FOR KEY CLOSURE FOR 50 MS. TO ELIMINATE BOUNCE.
-0400-            I     7       ; NOTE: IF NO KEY IS PRESSED, GETKEY WILL WAIT.
-0400-            I     8       ;
-CC03-            I     9       DDR3A   .EQ     $CC03       ; USING RC-ONE ADDRESS DECODING SCHEME, PLACING
-CC02-            I    10       DDR3B   .EQ     $CC02       ;  VIA3 AT $CC00 BY DEFAULT (INSTEAD OF $AC00)
-CC01-            I    11       PORT3A  .EQ     $CC01       ;  TO FIT RC-ONE ADDRESS DECODING THOUGH ORIGINAL
-CC00-            I    12       PORT3B  .EQ     $CC00       ;  CAN BE JUMPERED IF NEEDED/WANTED.
-0400-            I    13
-0400-A9 00       I    14 (  2)         LDA     #0
-0402-8D 03 CC    I    15 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
-0405-A9 FF       I    16 (  2)         LDA     #$FF
-0407-8D 02 CC    I    17 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
-040A-2C 01 CC    I    18 (  4) GETKEY  BIT     PORT3A      ; SEE IF KEY IS STILL DOWN FROM LAST KEY CLOSURE:
-040D-            I    19                                   ;  KEYSTROBE IN 'N' STATUS BIT.
-040D-10 FB       I    20 (2**)         BPL     GETKEY      ; IF YES, WAIT FOR KEY RELEASE
-040F-A2 0F       I    21 (  2) RSTART  LDX     #15         ; SET KEY COUNTER TO 15
-0411-8E 00 CC    I    22 (  4) NXTKEY  STX     PORT3B      ; OUTPUT KEY # TO 74154
-0414-2C 01 CC    I    23 (  4)         BIT     PORT3A      ; SEE IF KEY DOWN: STROBE IN 'N'
-0417-10 05       I    24 (2**)         BPL     BOUNCE      ;  IF YES, GO DEBOUNCE
-0419-CA          I    25 (  2)         DEX                 ;   DECREMENT KEY #
-041A-10 F5       I    26 (2**)         BPL     NXTKEY      ;  NO, DO NEXT KEY
-041C-30 F1       I    27 (2**)         BMI     RSTART      ; START OVER
-041E-8A          I    28 (  2) BOUNCE  TXA                 ; SAVE KEY NUMBER IN A
-041F-A0 12       I    29 (  2)         LDY     #$12        ; OUTER LOOP CNT LOAD FOR DELAY OF 50 MS.
-0421-A2 FF       I    30 (  2) LP1     LDX     #$FF        ; INNER 11 US. LOOP
-0423-2C 01 CC    I    31 (  4) LP2     BIT     PORT3A      ; SEE IF KEY STILL DOWN
-0426-30 E7       I    32 (2**)         BMI     RSTART      ; IF NOT, KEY NOT VALID, RESTART
-0428-CA          I    33 (  2)         DEX
-0429-D0 F8       I    34 (2**)         BNE     LP2         ; THIS LOOP USES 2115*5 US.
-042B-88          I    35 (  2)         DEY
-042C-D0 F3       I    36 (2**)         BNE     LP1         ; OUTER LOOP: TOTAL IS 50 MS.
-042E-60          I    37 (  6)         RTS                 ; DONE: KEY IN A.
+0000-                  4       ;
+0000-                  5       ; FROM THE BOOK '6502 GAMES', EXPECTS THE SAME HARDWARE AS DECRIBED WITHIN IT.
+0000-                  6       ; THIS PART WAS NOT MEANT TO BE RUN DIRECTLY, SO I'VE JUST KEPT THE ADDRESS
+0000-                  7       ; DEFINITIONS GIVEN IN THAT CHAPTER.
+0000-                  8       ;
+C000-                  9       VIA1    .EQ     $C000
+CC00-                 10       VIA3    .EQ     $CC00
+0000-                 11
+0100-                 12               .OR     $0100       ; NOTE: BOOK PLACES $0100 INSIDE STACK, MEANING
+0100-                 13               .TA     $0100       ;  THAT ROUTINE MAY EASILY GET OVERWRITTEN.
+0100-                 14               .IN     getkey_routine.asm
+0100-            I     1       ; 'GETKEY' KEYBOARD INPUT ROUTINE READS AND DEBOUNCES KEYBOARD. RETURNS WITH
+0100-            I     2       ; KEY NUMBER IN ACCUMULATOR IF KEY DOWN. OPERATION: SENDS NUMBERS 0-F TO 74154
+0100-            I     3       ; (4 TO 16 LINE DECODER), WHICH GROUNDS ONE SIDE OF KEYSWITCHES ONE AT A TIME.
+0100-            I     4       ; IF A KEY IS DOWN, PA7 OF VIA #3 WILL BE GROUNDED, AND THE CURRENT VALUE
+0100-            I     5       ; APPLIED TO THE 74154 BE THE KEY NUMBER. WHEN THE PROGRAM DETECTS A KEY CLOSE
+0100-            I     6       ; CHECKS FOR KEY CLOSURE FOR 50 MS. TO ELIMINATE BOUNCE.
+0100-            I     7       ; NOTE: IF NO KEY IS PRESSED, GETKEY WILL WAIT.
+0100-            I     8       ;
+CC03-            I     9       DDR3A   .EQ     VIA3+3      ; USING RC-ONE ADDRESS DECODING SCHEME, PLACING
+CC02-            I    10       DDR3B   .EQ     VIA3+2      ;  VIA3 AT $CC00 BY DEFAULT (INSTEAD OF $AC00)
+CC01-            I    11       PORT3A  .EQ     VIA3+1      ;  TO FIT RC-ONE ADDRESS DECODING THOUGH ORIGINAL
+CC00-            I    12       PORT3B  .EQ     VIA3        ;  CAN BE JUMPERED IF NEEDED/WANTED.
+0100-            I    13
+0100-A9 00       I    14 (  2)         LDA     #0
+0102-8D 03 CC    I    15 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+0105-A9 FF       I    16 (  2)         LDA     #$FF
+0107-8D 02 CC    I    17 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
+010A-2C 01 CC    I    18 (  4) GETKEY  BIT     PORT3A      ; SEE IF KEY IS STILL DOWN FROM LAST KEY CLOSURE:
+010D-            I    19                                   ;  KEYSTROBE IN 'N' STATUS BIT.
+010D-10 FB       I    20 (2**)         BPL     GETKEY      ; IF YES, WAIT FOR KEY RELEASE
+010F-A2 0F       I    21 (  2) RSTART  LDX     #15         ; SET KEY COUNTER TO 15
+0111-8E 00 CC    I    22 (  4) NXTKEY  STX     PORT3B      ; OUTPUT KEY # TO 74154
+0114-2C 01 CC    I    23 (  4)         BIT     PORT3A      ; SEE IF KEY DOWN: STROBE IN 'N'
+0117-10 05       I    24 (2**)         BPL     BOUNCE      ;  IF YES, GO DEBOUNCE
+0119-CA          I    25 (  2)         DEX                 ;   DECREMENT KEY #
+011A-10 F5       I    26 (2**)         BPL     NXTKEY      ;  NO, DO NEXT KEY
+011C-30 F1       I    27 (2**)         BMI     RSTART      ; START OVER
+011E-8A          I    28 (  2) BOUNCE  TXA                 ; SAVE KEY NUMBER IN A
+011F-A0 12       I    29 (  2)         LDY     #$12        ; OUTER LOOP CNT LOAD FOR DELAY OF 50 MS.
+0121-A2 FF       I    30 (  2) LP1     LDX     #$FF        ; INNER 11 US. LOOP
+0123-2C 01 CC    I    31 (  4) LP2     BIT     PORT3A      ; SEE IF KEY STILL DOWN
+0126-30 E7       I    32 (2**)         BMI     RSTART      ; IF NOT, KEY NOT VALID, RESTART
+0128-CA          I    33 (  2)         DEX
+0129-D0 F8       I    34 (2**)         BNE     LP2         ; THIS LOOP USES 2115*5 US.
+012B-88          I    35 (  2)         DEY
+012C-D0 F3       I    36 (2**)         BNE     LP1         ; OUTER LOOP: TOTAL IS 50 MS.
+012E-60          I    37 (  6)         RTS                 ; DONE: KEY IN A.

@@ -1,7 +1,15 @@
-0000-                  4
-0200-                  5               .OR     $0200
-0200-                  6               .TA     $0200
-0200-                  7               .IN     player.asm
+0000-                  4       ;
+0000-                  5       ; MUSIC PLAYER USING '6502 GAMES' HARDWARE. BOARD SHOULD BE JUMPERED WITH VIA
+0000-                  6       ; CHIPS AT THE ADDRESSES SPECIFIED BELOW. OTHER THAN THAT THE CODE IS SHOULD
+0000-                  7       ; BE UNCHANGED FROM THE BOOK THOUGH THERE WILL BE SOME DIFFERENCES DUE TO
+0000-                  8       ; ASSEMBLER USED.
+0000-                  9       ;
+C000-                 10       VIA1    .EQ     $C000
+CC00-                 11       VIA3    .EQ     $CC00
+0000-                 12
+0200-                 13               .OR     $0200
+0200-                 14               .TA     $0200
+0200-                 15               .IN     player.asm
 0200-            I     1       ;   MUSIC PLAYER PROGRAM
 0200-            I     2       ;   USES 16-KEY KEYBOARD AND BUFFERED SPEAKER
 0200-            I     3       ; PROGRAM PLAYS STORED MUSICAL NOTES. THERE ARE TWO MODES OF OPERATION: INPUT
@@ -16,8 +24,8 @@
 0003-            I    12       FREQ    .EQ     $03         ; TEMPORARY STORAGE FOR FREQUENCY
 0004-            I    13       DUR     .EQ     $04         ; TEMP STORAGE FOR DURATION
 0300-            I    14       TABEG   .EQ     $0300       ; TABLE TO STORE MUSIC
-CC00-            I    15       PORT3B  .EQ     $CC00       ; VIA OUTPUT PORT B
-CC02-            I    16       DDR3B   .EQ     $CC02       ; VIA PORT B DIRECTION REGISTER
+CC00-            I    15       PORT3B  .EQ     VIA3        ; VIA OUTPUT PORT B
+CC02-            I    16       DDR3B   .EQ     VIA3+2      ; VIA PORT B DIRECTION REGISTER
 0200-            I    17       ;
 0200-            I    18       ; COMMAND LINE INTERPRETER
 0200-            I    19       ;  $F AS INPUT MEANS RESET POINTERS, START OVER.
@@ -165,7 +173,7 @@ CC02-            I    16       DDR3B   .EQ     $CC02       ; VIA PORT B DIRECTIO
      80 8F 94 A1 
      AA B5 BF D7 
      E4          I   157       DURTAB  .HS     55.60.6B.72.80.8F.94.A1.AA.B5.BF.D7.E4
-02DE-                  8               .IN     ../CH01-Getkey/getkey_routine.asm
+02DE-                 16               .IN     ../CH01-Getkey/getkey_routine.asm
 02DE-            I     1       ; 'GETKEY' KEYBOARD INPUT ROUTINE READS AND DEBOUNCES KEYBOARD. RETURNS WITH
 02DE-            I     2       ; KEY NUMBER IN ACCUMULATOR IF KEY DOWN. OPERATION: SENDS NUMBERS 0-F TO 74154
 02DE-            I     3       ; (4 TO 16 LINE DECODER), WHICH GROUNDS ONE SIDE OF KEYSWITCHES ONE AT A TIME.
@@ -174,10 +182,10 @@ CC02-            I    16       DDR3B   .EQ     $CC02       ; VIA PORT B DIRECTIO
 02DE-            I     6       ; CHECKS FOR KEY CLOSURE FOR 50 MS. TO ELIMINATE BOUNCE.
 02DE-            I     7       ; NOTE: IF NO KEY IS PRESSED, GETKEY WILL WAIT.
 02DE-            I     8       ;
-CC03-            I     9       DDR3A   .EQ     $CC03       ; USING RC-ONE ADDRESS DECODING SCHEME, PLACING
-CC02-            I    10       DDR3B   .EQ     $CC02       ;  VIA3 AT $CC00 BY DEFAULT (INSTEAD OF $AC00)
-CC01-            I    11       PORT3A  .EQ     $CC01       ;  TO FIT RC-ONE ADDRESS DECODING THOUGH ORIGINAL
-CC00-            I    12       PORT3B  .EQ     $CC00       ;  CAN BE JUMPERED IF NEEDED/WANTED.
+CC03-            I     9       DDR3A   .EQ     VIA3+3      ; USING RC-ONE ADDRESS DECODING SCHEME, PLACING
+CC02-            I    10       DDR3B   .EQ     VIA3+2      ;  VIA3 AT $CC00 BY DEFAULT (INSTEAD OF $AC00)
+CC01-            I    11       PORT3A  .EQ     VIA3+1      ;  TO FIT RC-ONE ADDRESS DECODING THOUGH ORIGINAL
+CC00-            I    12       PORT3B  .EQ     VIA3        ;  CAN BE JUMPERED IF NEEDED/WANTED.
 02DE-            I    13
 02DE-A9 00       I    14 (  2)         LDA     #0
 02E0-8D 03 CC    I    15 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
