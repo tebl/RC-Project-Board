@@ -25,11 +25,11 @@ CC00-                 11       VIA3    .EQ     $CC00
 0203-            I    12       ; 6522 VIA #1 ADDRESSES:
 C004-            I    13       TIMER   .EQ     VIA1+4      ; LOW LATCH OF TIMER 1
 C003-            I    14       DDR1A   .EQ     VIA1+3      ; PORT A DATA DIRECTION REGISTER
-C003-            I    15       DDR1B   .EQ     VIA1+3      ; PORT B DATA DIRECTION REGISTER
+C002-            I    15       DDR1B   .EQ     VIA1+2      ; PORT B DATA DIRECTION REGISTER
 C001-            I    16       PORT1A  .EQ     VIA1+1      ; PORT A
 C000-            I    17       PORT1B  .EQ     VIA1        ; PORT B
 0203-            I    18       ; 6522 VIA #3 ADDRESSES:
-CC01-            I    19       DDR3A   .EQ     VIA3+1      ; PORT A DATA DIRECTION REGISTER
+CC03-            I    19       DDR3A   .EQ     VIA3+3      ; PORT A DATA DIRECTION REGISTER
 CC02-            I    20       DDR3B   .EQ     VIA3+2      ; PORT B DATA DIRECTION REGISTER
 CC00-            I    21       PORT3B  .EQ     VIA3        ; PORT B
 CC01-            I    22       PORT3A  .EQ     VIA3+1      ; PORT A
@@ -43,7 +43,7 @@ CC01-            I    22       PORT3A  .EQ     VIA3+1      ; PORT A
 0203-            I    30
 0203-A9 FF       I    31 (  2)         LDA     #$FF        ; SET UP DATA DIRECTION REGISTERS
 0205-8D 03 C0    I    32 (  4)         STA     DDR1A
-0208-8D 03 C0    I    33 (  4)         STA     DDR1B
+0208-8D 02 C0    I    33 (  4)         STA     DDR1B
 020B-8D 02 CC    I    34 (  4)         STA     DDR3B
 020E-85 02       I    35 (  2)         STA     DUR         ; SET UP TONE DURATIONS.
 0210-A9 0A       I    36 (  2) START   LDA     #$0A        ; 10 GUESSES ALLOWED
@@ -179,7 +179,7 @@ CC01-            I    22       PORT3A  .EQ     VIA3+1      ; PORT A
 02DE-            I    32       ; THE CODE.
 02DE-            I    33       ;
 02DE-A9 00       I    34 (  2) INITKEY LDA     #0
-02E0-8D 01 CC    I    35 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+02E0-8D 03 CC    I    35 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
 02E3-A9 FF       I    36 (  2)         LDA     #$FF
 02E5-8D 02 CC    I    37 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
 02E8-60          I    38 (  6)         RTS

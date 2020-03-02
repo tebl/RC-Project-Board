@@ -11,5 +11,6 @@ VIA3    .EQ     $CC00
 
         .OR     $0200
         .TA     $0200
+RCONE   JSR     INITKEY
         .IN     ../../common/CH04-Hexguess/game.asm
         .IN     ../../common/CH01-Getkey/getkey_routine.asm

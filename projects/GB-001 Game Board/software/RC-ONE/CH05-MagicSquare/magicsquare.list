@@ -1,0 +1,148 @@
+0000-                  4       ;
+0000-                  5       ; MAGIC SQUARE GAME FOR THE KIM-1 USING '6502 GAMES' HARDWARE. BOARD SHOULD BE
+0000-                  6       ; JUMPERED WITH VIA CHIPS AT THE ADDRESSES SPECIFIED BELOW. OTHER THAN THAT
+0000-                  7       ; THE CODE IS UNCHANGED FROM THE BOOK.
+0000-                  8       ;
+C000-                  9       VIA1    .EQ     $C000
+CC00-                 10       VIA3    .EQ     $CC00
+0000-                 11
+0200-                 12               .OR     $0200
+0200-                 13               .TA     $0200
+0200-20 A4 02         14 (  6)         JSR     INITKEY
+0203-                 15               .IN     ../../common/CH05-MagicSquare/game.asm
+0203-            I     1       ;   'MAGIC SQUARE'
+0203-            I     2       ; KEYS 1-9 ON THE HEX KEYBOARD ARE EACH ASSOCIATED WITH ON LED IN THE 3X3
+0203-            I     3       ; ARRAY. WHEN A KEY IS PRESSET, IT CHANGES THE PATTERN OF THE LIT LEDS IN THE
+0203-            I     4       ; ARRAY. THE OBJECT OF THE GAME IS TO CONVERT THE RANDOM PATTERN THE GAME
+0203-            I     5       ; STARTS WITH TO A SQUARE OF LIT LEDS BY PRESSING THE KEYS. THE LEDS WILL FLASH
+0203-            I     6       ; WHEN THE WINNING PATTERN IS ACHIEVED. KEY #0 CAN BE USED AT ANY TIME TO
+0203-            I     7       ; RESTART THE GAME WITH A NEW PATTERN.
+0203-            I     8       ;
+0203-            I     9       ;
+C004-            I    10       T1CL    .EQ     VIA1+4      ; LOW LATCH OF TIMER 1
+C003-            I    11       DDR1A   .EQ     VIA1+3      ; PORT A DATA DIRECTION REGISTER
+C002-            I    12       DDR1B   .EQ     VIA1+2      ; PORT B DATA DIRECTION REGISTER
+C001-            I    13       PORT1A  .EQ     VIA1+1      ; PORT A
+C000-            I    14       PORT2   .EQ     VIA1
+C000-            I    15       PORT1B  .EQ     VIA1        ; PORT B
+CC03-            I    16       DDR3A   .EQ     VIA3+3      ; PORT A DATA DIRECTION REGISTER
+CC02-            I    17       DDR3B   .EQ     VIA3+2      ; PORT B DATA DIRECTION REGISTER
+CC00-            I    18       PORT3B  .EQ     VIA3        ; PORT B
+CC01-            I    19       PORT3A  .EQ     VIA3+1      ; PORT A
+0203-            I    20
+0000-            I    21       ZP      .EQ     $00
+0000-            I    22       TEMP    .EQ     ZP          ; TEMPORARY STORAGE
+0203-            I    23       ;
+0203-            I    24       ; COMMENTS: THIS PROGRAM USES A TIMER REGISTER FOR A RANDOM NUMBER SOURCE. IF
+0203-            I    25       ; NONE IS AVAILABLE, A RANDOM NUMBER GENERATOR COULD BE USED, BUT DUE TO ITS
+0203-            I    26       ; REPEATABILITY, IT WOULD NOT WORK AS WELL. THIS PROGRAM USES THE REGISTERS OF
+0203-            I    27       ; VIA1 PORT A FOR THE STORAGE OF THE LED PATTERN. SINCE WHAT IS READ BY THE
+0203-            I    28       ; PROCESSOR IS THE POLARITY OF THE OUTPUT, AN EXCESSIVE LOAD ON THE LINES WOULD
+0203-            I    29       ; PREVENT THE PROGAM FROM WORKING CORRECTLY.
+0203-            I    30       ;
+0203-A9 FF       I    31 (  2)         LDA     #$FF        ; SET UP DATA DIRECTION REGISTERS
+0205-8D 03 C0    I    32 (  4)         STA     DDR1A
+0208-8D 02 C0    I    33 (  4)         STA     DDR1B
+020B-AD 04 C0    I    34 (  4) START   LDA     T1CL        ; GET 1ST RANDOM NUMBER
+020E-8D 01 C0    I    35 (  4)         STA     PORT1A
+0211-AD 04 C0    I    36 (  4)         LDA     T1CL        ; ... AND SECOND.
+0214-29 01       I    37 (  2)         AND     #01         ; MASK OUT BOTTOM ROW LEDS
+0216-8D 00 C0    I    38 (  4)         STA     PORT1B
+0219-20 7F 02    I    39 (  6) KEY     JSR     GETKEY
+021C-C9 00       I    40 (  2)         CMP     #0          ; KEY MUST BE 1-9: IS IT 0?
+021E-F0 EB       I    41 (2**)         BEQ     START       ; YES, RESTART GAME WITH NEW BOARD.
+0220-C9 0A       I    42 (  2)         CMP     #10         ; IS IT LESS THAN 10?
+0222-10 F5       I    43 (2**)         BPL     KEY         ; + IF KEY >=10, SO GET ANOTHER.
+0224-            I    44       ;
+0224-            I    45       ; FOLLOWING SECTION USES KEY NUMBER AS INDEX TO FIND IN TABLE A BIT PATTERN
+0224-            I    46       ; USED TO COMPLEMENT LEDS.
+0224-            I    47       ;
+0224-38          I    48 (  2)         SEC                 ; DECREMENT A FOR TABLE ACCESS
+0225-E9 01       I    49 (  2)         SBC     #1
+0227-0A          I    50 (  2)         ASL     A           ; MULTIPLY A*2 (EACH ENTRY IN TABLE IS 2 BYTES)
+0228-AA          I    51 (  2)         TAX                 ; USE A AS INDEX
+0229-AD 01 C0    I    52 (  4)         LDA     PORT1A      ; GET PORT CONTENTS FOR COMPLEMENT
+022C-5D 6E 02    I    53 ( 4*)         EOR     TABLE,X     ; EOR PORT CONTENTS WITH PATTERN
+022F-8D 01 C0    I    54 (  4)         STA     PORT1A      ; RESTORE PORT1A
+0232-AD 00 C0    I    55 (  4)         LDA     PORT1B      ; DO SAME FOR PORT1B,
+0235-5D 6F 02    I    56 ( 4*)         EOR     TABLE+1,X   ; ... USING NEXT TABLE ENTRY.
+0238-29 01       I    57 (  2)         AND     #01         ; MASK OUT BOTTOM ROW LEDS
+023A-8D 00 C0    I    58 (  4)         STA     PORT1B      ; ... AND RESTORE.
+023D-            I    59       ;
+023D-            I    60       ; THIS SECTION CHECKS FOR WINNING PATTERN IN LEDS.
+023D-            I    61       ;
+023D-4A          I    62 (  2)         LSR     A           ; SHIFT BIT 0 OF PORT 1 INTO CARRY.
+023E-90 D9       I    63 (2**)         BCC     KEY         ; IF NOT WIN PATTERN, GET NEXT MOVE.
+0240-AD 01 C0    I    64 (  4)         LDA     PORT1A      ; LOAD PORT1A FOR WIN TEST
+0243-C9 EF       I    65 (  2)         CMP     #%11101111  ; CHECK FOR WIN PATTERN
+0245-D0 D2       I    66 (2**)         BNE     KEY         ; NO WIN, GET NEXT MOVE
+0247-            I    67       ;
+0247-            I    68       ; WIN - BLINK LEDS EVERY 1/2 SECOND, 4 TIMES
+0247-            I    69       ;
+0247-A9 0E       I    70 (  2)         LDA     #14
+0249-85 00       I    71 (  2)         STA     TEMP        ; LOAD NUMBER OF BLINKS
+024B-A2 20       I    72 (  2) BLINK   LDX     #$20        ; DELAY CONSTANT FOR .08 SECOND
+024D-A0 FF       I    73 (  2) DELAY   LDY     #$FF        ; OUTER LOOP OF VARIABLE DELAY ROUTINE, WHOSE DELAY
+024F-            I    74                                   ; IS 2556 * (CONTENTS OF X ON ENTER
+024F-EA          I    75 (  2) DLY     NOP                 ; 10 MICROSECOND LOOP)
+0250-D0 00       I    76 (2**)         BNE     DLY0
+0252-88          I    77 (  2) DLY0    DEY
+0253-D0 FA       I    78 (2**)         BNE     DLY
+0255-CA          I    79 (  2)         DEX
+0256-D0 F5       I    80 (2**)         BNE     DELAY
+0258-AD 01 C0    I    81 (  4)         LDA     PORT1A      ; GET PORTS AND COMPLEMENT THEM
+025B-49 FF       I    82 (  2)         EOR     #$FF
+025D-8D 01 C0    I    83 (  4)         STA     PORT1A
+0260-AD 00 C0    I    84 (  4)         LDA     PORT1B
+0263-49 01       I    85 (  2)         EOR     #1
+0265-8D 00 C0    I    86 (  4)         STA     PORT1B
+0268-C6 00       I    87 (  5)         DEC     TEMP        ; COUNT DOWN NUMBER OF BLINKS
+026A-D0 DF       I    88 (2**)         BNE     BLINK       ; DO AGAIN IF NOT DONE
+026C-F0 AB       I    89 (2**)         BEQ     KEY
+026E-            I    90       ;
+026E-            I    91       ; TABLE OF CODES USED TO COMPLEMENT LEDS
+026E-            I    92       ;
+026E-1B 00 07 36 
+     00 49 00 BA 
+     00 24 01 D8 
+     00 C0 01 B0 
+     01          I    93       TABLE   .HS     1B.00.07.36.00.49.00.BA.00.24.01.D8.00.C0.01.B0.01
+027F-                 16               .IN     ../../common/CH01-Getkey/getkey_routine.asm
+027F-            I     1       ; 'GETKEY' KEYBOARD INPUT ROUTINE READS AND DEBOUNCES KEYBOARD. RETURNS WITH
+027F-            I     2       ; KEY NUMBER IN ACCUMULATOR IF KEY DOWN. OPERATION: SENDS NUMBERS 0-F TO 74154
+027F-            I     3       ; (4 TO 16 LINE DECODER), WHICH GROUNDS ONE SIDE OF KEYSWITCHES ONE AT A TIME.
+027F-            I     4       ; IF A KEY IS DOWN, PA7 OF VIA #3 WILL BE GROUNDED, AND THE CURRENT VALUE
+027F-            I     5       ; APPLIED TO THE 74154 BE THE KEY NUMBER. WHEN THE PROGRAM DETECTS A KEY CLOSE
+027F-            I     6       ; CHECKS FOR KEY CLOSURE FOR 50 MS. TO ELIMINATE BOUNCE.
+027F-            I     7       ; NOTE: IF NO KEY IS PRESSED, GETKEY WILL WAIT.
+027F-            I     8       ;
+027F-2C 01 CC    I     9 (  4) GETKEY  BIT     PORT3A      ; SEE IF KEY IS STILL DOWN FROM LAST KEY CLOSURE:
+0282-            I    10                                   ;  KEYSTROBE IN 'N' STATUS BIT.
+0282-10 FB       I    11 (2**)         BPL     GETKEY      ; IF YES, WAIT FOR KEY RELEASE
+0284-A2 0F       I    12 (  2) RSTART  LDX     #15         ; SET KEY COUNTER TO 15
+0286-8E 00 CC    I    13 (  4) NXTKEY  STX     PORT3B      ; OUTPUT KEY # TO 74154
+0289-2C 01 CC    I    14 (  4)         BIT     PORT3A      ; SEE IF KEY DOWN: STROBE IN 'N'
+028C-10 05       I    15 (2**)         BPL     BOUNCE      ;  IF YES, GO DEBOUNCE
+028E-CA          I    16 (  2)         DEX                 ;   DECREMENT KEY #
+028F-10 F5       I    17 (2**)         BPL     NXTKEY      ;  NO, DO NEXT KEY
+0291-30 F1       I    18 (2**)         BMI     RSTART      ; START OVER
+0293-8A          I    19 (  2) BOUNCE  TXA                 ; SAVE KEY NUMBER IN A
+0294-A0 12       I    20 (  2)         LDY     #$12        ; OUTER LOOP CNT LOAD FOR DELAY OF 50 MS.
+0296-A2 FF       I    21 (  2) LP1     LDX     #$FF        ; INNER 11 US. LOOP
+0298-2C 01 CC    I    22 (  4) LP2     BIT     PORT3A      ; SEE IF KEY STILL DOWN
+029B-30 E7       I    23 (2**)         BMI     RSTART      ; IF NOT, KEY NOT VALID, RESTART
+029D-CA          I    24 (  2)         DEX
+029E-D0 F8       I    25 (2**)         BNE     LP2         ; THIS LOOP USES 2115*5 US.
+02A0-88          I    26 (  2)         DEY
+02A1-D0 F3       I    27 (2**)         BNE     LP1         ; OUTER LOOP: TOTAL IS 50 MS.
+02A3-60          I    28 (  6)         RTS                 ; DONE: KEY IN A.
+02A4-            I    29       ;
+02A4-            I    30       ; SUBROUTINE 'INITKEY'
+02A4-            I    31       ; TAKES CARE OF INITIALIZING VIA #3 FOR USING WITH THE GETKEY ROUTINE FROM
+02A4-            I    32       ; THE CODE.
+02A4-            I    33       ;
+02A4-A9 00       I    34 (  2) INITKEY LDA     #0
+02A6-8D 03 CC    I    35 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+02A9-A9 FF       I    36 (  2)         LDA     #$FF
+02AB-8D 02 CC    I    37 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
+02AE-60          I    38 (  6)         RTS
