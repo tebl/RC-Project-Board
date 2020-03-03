@@ -8,16 +8,17 @@
 ; WHATEVER BUGS YOU MAY FIND CAN BE BLAMED ON ME AND NOT THE AUTHOR OF THE
 ; BOOK.
 ;
-POINTL  .EQ     $FA         ; ADDRESS LO ON DISPLAY
-POINTH  .EQ     $FB         ; ADDRESS HI ON DISPLAY
-INH     .EQ     $F9         ; INPUTBUFFER HI
-SCANDS  .EQ     $1F1F       ; MONITOR FUNCTION TO OUTPUT A DIGIT
 VIA1    .EQ     $C000
 VIA3    .EQ     $CC00
+DDR1A   .EQ     VIA1+3      ; USING RC-ONE ADDRESS DECODING SCHEME, PLACING
+DDR1B   .EQ     VIA1+2      ;  VIA3 AT $CC00 BY DEFAULT (INSTEAD OF $AC00)
+PORT1A  .EQ     VIA1+1      ;  TO FIT RC-ONE ADDRESS DECODING THOUGH ORIGINAL
+PORT1B  .EQ     VIA1        ;  CAN BE JUMPERED IF NEEDED/WANTED.    
 DDR3A   .EQ     VIA3+3      ; USING RC-ONE ADDRESS DECODING SCHEME, PLACING
 DDR3B   .EQ     VIA3+2      ;  VIA3 AT $CC00 BY DEFAULT (INSTEAD OF $AC00)
 PORT3A  .EQ     VIA3+1      ;  TO FIT RC-ONE ADDRESS DECODING THOUGH ORIGINAL
 PORT3B  .EQ     VIA3        ;  CAN BE JUMPERED IF NEEDED/WANTED.    
+
 
         .OR     $0200
         .TA     $0200
@@ -25,13 +26,26 @@ RC_ONE  LDA     #0
         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
         LDA     #$FF
         STA     DDR3B       ; SET KEYS FOR OUTPUT
+        STA     DDR1A
+        STA     DDR1B
         LDA     #0
-        STA     POINTH
-        STA     POINTL
-        STA     INH
+        STA     PORT1A
+        STA     PORT1B
 LOOP    JSR     GETKEY      ; GET THE KEY USING THE SUB-ROUTINE FROM THE BOOK,
-        STA     INH         ;  WE'LL HAVE IT IN A SO STORE IT TO DATA DIGITS.
-        JSR     SCANDS      ; HAVE THE MONITOR OUTPUT THE VALUE
+        CMP     #0          ; KEY 0?
+        BEQ     OUTPUT0     ; YES, TURN ON ALL PORT1B LEDS
+        CMP     #15         ; KEY F?
+        BEQ     OUTPUTF     ; YES, TURN ON ALL PORT1A LEDS
+        JMP     OUTPUTX     ; NO, OUTPUT KEY AS ENTERED ON PORT1A
+OUTPUT0 LDA     #$FF
+        STA     PORT1B
+        JMP     LOOP
+OUTPUTF LDA     #$FF
+        STA     PORT1A
+        JMP     LOOP
+OUTPUTX STA     PORT1A
+        LDA     #0
+        STA     PORT1B      ; RESET PORT 1B
         JMP     LOOP        ; DO IT ALL AGAIN
 
         .IN     ../../common/CH01-Getkey/getkey_routine.asm

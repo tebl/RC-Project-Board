@@ -5,69 +5,83 @@
 0000-                  8       ; WHATEVER BUGS YOU MAY FIND CAN BE BLAMED ON ME AND NOT THE AUTHOR OF THE
 0000-                  9       ; BOOK.
 0000-                 10       ;
-00FA-                 11       POINTL  .EQ     $FA         ; ADDRESS LO ON DISPLAY
-00FB-                 12       POINTH  .EQ     $FB         ; ADDRESS HI ON DISPLAY
-00F9-                 13       INH     .EQ     $F9         ; INPUTBUFFER HI
-1F1F-                 14       SCANDS  .EQ     $1F1F       ; MONITOR FUNCTION TO OUTPUT A DIGIT
-C000-                 15       VIA1    .EQ     $C000
-CC00-                 16       VIA3    .EQ     $CC00
+C000-                 11       VIA1    .EQ     $C000
+CC00-                 12       VIA3    .EQ     $CC00
+C003-                 13       DDR1A   .EQ     VIA1+3      ; USING RC-ONE ADDRESS DECODING SCHEME, PLACING
+C002-                 14       DDR1B   .EQ     VIA1+2      ;  VIA3 AT $CC00 BY DEFAULT (INSTEAD OF $AC00)
+C001-                 15       PORT1A  .EQ     VIA1+1      ;  TO FIT RC-ONE ADDRESS DECODING THOUGH ORIGINAL
+C000-                 16       PORT1B  .EQ     VIA1        ;  CAN BE JUMPERED IF NEEDED/WANTED.
 CC03-                 17       DDR3A   .EQ     VIA3+3      ; USING RC-ONE ADDRESS DECODING SCHEME, PLACING
 CC02-                 18       DDR3B   .EQ     VIA3+2      ;  VIA3 AT $CC00 BY DEFAULT (INSTEAD OF $AC00)
 CC01-                 19       PORT3A  .EQ     VIA3+1      ;  TO FIT RC-ONE ADDRESS DECODING THOUGH ORIGINAL
 CC00-                 20       PORT3B  .EQ     VIA3        ;  CAN BE JUMPERED IF NEEDED/WANTED.
 0000-                 21
-0200-                 22               .OR     $0200
-0200-                 23               .TA     $0200
-0200-A9 00            24 (  2) RC_ONE  LDA     #0
-0202-8D 03 CC         25 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
-0205-A9 FF            26 (  2)         LDA     #$FF
-0207-8D 02 CC         27 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
-020A-A9 00            28 (  2)         LDA     #0
-020C-85 FB            29 (  2)         STA     POINTH
-020E-85 FA            30 (  2)         STA     POINTL
-0210-85 F9            31 (  2)         STA     INH
-0212-20 1D 02         32 (  6) LOOP    JSR     GETKEY      ; GET THE KEY USING THE SUB-ROUTINE FROM THE BOOK,
-0215-85 F9            33 (  2)         STA     INH         ;  WE'LL HAVE IT IN A SO STORE IT TO DATA DIGITS.
-0217-20 1F 1F         34 (  6)         JSR     SCANDS      ; HAVE THE MONITOR OUTPUT THE VALUE
-021A-4C 12 02         35 (  3)         JMP     LOOP        ; DO IT ALL AGAIN
-021D-                 36
-021D-                 37               .IN     ../../common/CH01-Getkey/getkey_routine.asm
-021D-            I     1       ; 'GETKEY' KEYBOARD INPUT ROUTINE READS AND DEBOUNCES KEYBOARD. RETURNS WITH
-021D-            I     2       ; KEY NUMBER IN ACCUMULATOR IF KEY DOWN. OPERATION: SENDS NUMBERS 0-F TO 74154
-021D-            I     3       ; (4 TO 16 LINE DECODER), WHICH GROUNDS ONE SIDE OF KEYSWITCHES ONE AT A TIME.
-021D-            I     4       ; IF A KEY IS DOWN, PA7 OF VIA #3 WILL BE GROUNDED, AND THE CURRENT VALUE
-021D-            I     5       ; APPLIED TO THE 74154 BE THE KEY NUMBER. WHEN THE PROGRAM DETECTS A KEY CLOSE
-021D-            I     6       ; CHECKS FOR KEY CLOSURE FOR 50 MS. TO ELIMINATE BOUNCE.
-021D-            I     7       ; NOTE: IF NO KEY IS PRESSED, GETKEY WILL WAIT.
-021D-            I     8       ;
-021D-2C 01 CC    I     9 (  4) GETKEY  BIT     PORT3A      ; SEE IF KEY IS STILL DOWN FROM LAST KEY CLOSURE:
-0220-            I    10                                   ;  KEYSTROBE IN 'N' STATUS BIT.
-0220-10 FB       I    11 (2**)         BPL     GETKEY      ; IF YES, WAIT FOR KEY RELEASE
-0222-A2 0F       I    12 (  2) RSTART  LDX     #15         ; SET KEY COUNTER TO 15
-0224-8E 00 CC    I    13 (  4) NXTKEY  STX     PORT3B      ; OUTPUT KEY # TO 74154
-0227-2C 01 CC    I    14 (  4)         BIT     PORT3A      ; SEE IF KEY DOWN: STROBE IN 'N'
-022A-10 05       I    15 (2**)         BPL     BOUNCE      ;  IF YES, GO DEBOUNCE
-022C-CA          I    16 (  2)         DEX                 ;   DECREMENT KEY #
-022D-10 F5       I    17 (2**)         BPL     NXTKEY      ;  NO, DO NEXT KEY
-022F-30 F1       I    18 (2**)         BMI     RSTART      ; START OVER
-0231-8A          I    19 (  2) BOUNCE  TXA                 ; SAVE KEY NUMBER IN A
-0232-A0 12       I    20 (  2)         LDY     #$12        ; OUTER LOOP CNT LOAD FOR DELAY OF 50 MS.
-0234-A2 FF       I    21 (  2) LP1     LDX     #$FF        ; INNER 11 US. LOOP
-0236-2C 01 CC    I    22 (  4) LP2     BIT     PORT3A      ; SEE IF KEY STILL DOWN
-0239-30 E7       I    23 (2**)         BMI     RSTART      ; IF NOT, KEY NOT VALID, RESTART
-023B-CA          I    24 (  2)         DEX
-023C-D0 F8       I    25 (2**)         BNE     LP2         ; THIS LOOP USES 2115*5 US.
-023E-88          I    26 (  2)         DEY
-023F-D0 F3       I    27 (2**)         BNE     LP1         ; OUTER LOOP: TOTAL IS 50 MS.
-0241-60          I    28 (  6)         RTS                 ; DONE: KEY IN A.
-0242-            I    29       ;
-0242-            I    30       ; SUBROUTINE 'INITKEY'
-0242-            I    31       ; TAKES CARE OF INITIALIZING VIA #3 FOR USING WITH THE GETKEY ROUTINE FROM
-0242-            I    32       ; THE CODE.
-0242-            I    33       ;
-0242-A9 00       I    34 (  2) INITKEY LDA     #0
-0244-8D 03 CC    I    35 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
-0247-A9 FF       I    36 (  2)         LDA     #$FF
-0249-8D 02 CC    I    37 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
-024C-60          I    38 (  6)         RTS
-024D-                 38
+0000-                 22
+0200-                 23               .OR     $0200
+0200-                 24               .TA     $0200
+0200-A9 00            25 (  2) RC_ONE  LDA     #0
+0202-8D 03 CC         26 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+0205-A9 FF            27 (  2)         LDA     #$FF
+0207-8D 02 CC         28 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
+020A-8D 03 C0         29 (  4)         STA     DDR1A
+020D-8D 02 C0         30 (  4)         STA     DDR1B
+0210-A9 00            31 (  2)         LDA     #0
+0212-8D 01 C0         32 (  4)         STA     PORT1A
+0215-8D 00 C0         33 (  4)         STA     PORT1B
+0218-20 41 02         34 (  6) LOOP    JSR     GETKEY      ; GET THE KEY USING THE SUB-ROUTINE FROM THE BOOK,
+021B-C9 00            35 (  2)         CMP     #0          ; KEY 0?
+021D-F0 07            36 (2**)         BEQ     OUTPUT0     ; YES, TURN ON ALL PORT1B LEDS
+021F-C9 0F            37 (  2)         CMP     #15         ; KEY F?
+0221-F0 0B            38 (2**)         BEQ     OUTPUTF     ; YES, TURN ON ALL PORT1A LEDS
+0223-4C 36 02         39 (  3)         JMP     OUTPUTX     ; NO, OUTPUT KEY AS ENTERED ON PORT1A
+0226-A9 FF            40 (  2) OUTPUT0 LDA     #$FF
+0228-8D 00 C0         41 (  4)         STA     PORT1B
+022B-4C 18 02         42 (  3)         JMP     LOOP
+022E-A9 FF            43 (  2) OUTPUTF LDA     #$FF
+0230-8D 01 C0         44 (  4)         STA     PORT1A
+0233-4C 18 02         45 (  3)         JMP     LOOP
+0236-8D 01 C0         46 (  4) OUTPUTX STA     PORT1A
+0239-A9 00            47 (  2)         LDA     #0
+023B-8D 00 C0         48 (  4)         STA     PORT1B      ; RESET PORT 1B
+023E-4C 18 02         49 (  3)         JMP     LOOP        ; DO IT ALL AGAIN
+0241-                 50
+0241-                 51               .IN     ../../common/CH01-Getkey/getkey_routine.asm
+0241-            I     1       ; 'GETKEY' KEYBOARD INPUT ROUTINE READS AND DEBOUNCES KEYBOARD. RETURNS WITH
+0241-            I     2       ; KEY NUMBER IN ACCUMULATOR IF KEY DOWN. OPERATION: SENDS NUMBERS 0-F TO 74154
+0241-            I     3       ; (4 TO 16 LINE DECODER), WHICH GROUNDS ONE SIDE OF KEYSWITCHES ONE AT A TIME.
+0241-            I     4       ; IF A KEY IS DOWN, PA7 OF VIA #3 WILL BE GROUNDED, AND THE CURRENT VALUE
+0241-            I     5       ; APPLIED TO THE 74154 BE THE KEY NUMBER. WHEN THE PROGRAM DETECTS A KEY CLOSE
+0241-            I     6       ; CHECKS FOR KEY CLOSURE FOR 50 MS. TO ELIMINATE BOUNCE.
+0241-            I     7       ; NOTE: IF NO KEY IS PRESSED, GETKEY WILL WAIT.
+0241-            I     8       ;
+0241-2C 01 CC    I     9 (  4) GETKEY  BIT     PORT3A      ; SEE IF KEY IS STILL DOWN FROM LAST KEY CLOSURE:
+0244-            I    10                                   ;  KEYSTROBE IN 'N' STATUS BIT.
+0244-10 FB       I    11 (2**)         BPL     GETKEY      ; IF YES, WAIT FOR KEY RELEASE
+0246-A2 0F       I    12 (  2) RSTART  LDX     #15         ; SET KEY COUNTER TO 15
+0248-8E 00 CC    I    13 (  4) NXTKEY  STX     PORT3B      ; OUTPUT KEY # TO 74154
+024B-2C 01 CC    I    14 (  4)         BIT     PORT3A      ; SEE IF KEY DOWN: STROBE IN 'N'
+024E-10 05       I    15 (2**)         BPL     BOUNCE      ;  IF YES, GO DEBOUNCE
+0250-CA          I    16 (  2)         DEX                 ;   DECREMENT KEY #
+0251-10 F5       I    17 (2**)         BPL     NXTKEY      ;  NO, DO NEXT KEY
+0253-30 F1       I    18 (2**)         BMI     RSTART      ; START OVER
+0255-8A          I    19 (  2) BOUNCE  TXA                 ; SAVE KEY NUMBER IN A
+0256-A0 12       I    20 (  2)         LDY     #$12        ; OUTER LOOP CNT LOAD FOR DELAY OF 50 MS.
+0258-A2 FF       I    21 (  2) LP1     LDX     #$FF        ; INNER 11 US. LOOP
+025A-2C 01 CC    I    22 (  4) LP2     BIT     PORT3A      ; SEE IF KEY STILL DOWN
+025D-30 E7       I    23 (2**)         BMI     RSTART      ; IF NOT, KEY NOT VALID, RESTART
+025F-CA          I    24 (  2)         DEX
+0260-D0 F8       I    25 (2**)         BNE     LP2         ; THIS LOOP USES 2115*5 US.
+0262-88          I    26 (  2)         DEY
+0263-D0 F3       I    27 (2**)         BNE     LP1         ; OUTER LOOP: TOTAL IS 50 MS.
+0265-60          I    28 (  6)         RTS                 ; DONE: KEY IN A.
+0266-            I    29       ;
+0266-            I    30       ; SUBROUTINE 'INITKEY'
+0266-            I    31       ; TAKES CARE OF INITIALIZING VIA #3 FOR USING WITH THE GETKEY ROUTINE FROM
+0266-            I    32       ; THE CODE.
+0266-            I    33       ;
+0266-A9 00       I    34 (  2) INITKEY LDA     #0
+0268-8D 03 CC    I    35 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+026B-A9 FF       I    36 (  2)         LDA     #$FF
+026D-8D 02 CC    I    37 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
+0270-60          I    38 (  6)         RTS
+0271-                 52
