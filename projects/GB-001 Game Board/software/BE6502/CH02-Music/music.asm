@@ -8,6 +8,7 @@
 ;
 VIA1    .EQ     $4000       ; GAME BOARD (VIA #1)
 VIA3    .EQ     $4C00       ; GAME BOARD (VIA #3)
+TABEG   .EQ     $0350       ; TABLE TO STORE MUSIC
 
         .OR     $8000
         .TA     $0000

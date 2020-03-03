@@ -8,6 +8,7 @@
 ;
 VIA1    .EQ     $C000
 VIA3    .EQ     $CC00
+TABEG   .EQ     $0350       ; TABLE TO STORE MUSIC
 
         .OR     $0200
         .TA     $0200
