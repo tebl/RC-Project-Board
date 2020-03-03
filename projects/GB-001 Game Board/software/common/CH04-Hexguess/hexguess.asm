@@ -1,5 +1,5 @@
         .CR     6502
-        .TF     hexguess.hex,hex
+        .TF     hexguess.hex,INT
         .LF     hexguess.list
 ;
 ; HEX GUESSING GAME USING '6502 GAMES' HARDWARE. BOARD SHOULD BE JUMPERED WITH

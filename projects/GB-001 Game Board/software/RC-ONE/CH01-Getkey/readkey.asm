@@ -1,5 +1,5 @@
         .CR     6502
-        .TF     readkey.hex,hex
+        .TF     readkey.hex,INT
         .LF     readkey.list
 ;
 ; SMALL PROGRAM FOR THE KIM-1 COMPUTER THAT SEEKS TO DEMONSTRATE THE GET KEY
@@ -14,6 +14,10 @@ INH     .EQ     $F9         ; INPUTBUFFER HI
 SCANDS  .EQ     $1F1F       ; MONITOR FUNCTION TO OUTPUT A DIGIT
 VIA1    .EQ     $C000
 VIA3    .EQ     $CC00
+DDR3A   .EQ     VIA3+3      ; USING RC-ONE ADDRESS DECODING SCHEME, PLACING
+DDR3B   .EQ     VIA3+2      ;  VIA3 AT $CC00 BY DEFAULT (INSTEAD OF $AC00)
+PORT3A  .EQ     VIA3+1      ;  TO FIT RC-ONE ADDRESS DECODING THOUGH ORIGINAL
+PORT3B  .EQ     VIA3        ;  CAN BE JUMPERED IF NEEDED/WANTED.    
 
         .OR     $0200
         .TA     $0200

@@ -50,26 +50,26 @@ CC03-            I    17       DDR3A   .EQ     VIA3+3
 0208-8D 02 CC    I    38 (  4)         STA     DDR3B
 020B-A9 00       I    39 (  2)         LDA     #0
 020D-8D 03 CC    I    40 (  4)         STA     DDR3A
-0210-85 05       I    41 (  3)         STA     PLYR1       ; CLEAR NUMBER OF WINS.
-0212-85 06       I    42 (  3)         STA     PLYR2
+0210-85 05       I    41 (  2)         STA     PLYR1       ; CLEAR NUMBER OF WINS.
+0212-85 06       I    42 (  2)         STA     PLYR2
 0214-A9 79       I    43 (  2) MOVE    LDA     #%01111001
 0216-8D 01 C0    I    44 (  4)         STA     PORT1A      ; SHOW RIGHT ARROW
 0219-A9 00       I    45 (  2)         LDA     #0
 021B-8D 00 C0    I    46 (  4)         STA     PORT1B
-021E-85 02       I    47 (  3)         STA     CNTLO       ; CLEAR COUNTERS
-0220-85 01       I    48 (  3)         STA     CNTHI
+021E-85 02       I    47 (  2)         STA     CNTLO       ; CLEAR COUNTERS
+0220-85 01       I    48 (  2)         STA     CNTHI
 0222-20 8C 02    I    49 (  6)         JSR     PLAY        ; GET PLAYER 1S TIME.
 0225-A5 02       I    50 (  3)         LDA     CNTLO       ; TRANSFER TEMP COUNT TO PERMANENT STORAGE
-0227-85 04       I    51 (  3)         STA     CNT1L
+0227-85 04       I    51 (  2)         STA     CNT1L
 0229-A5 01       I    52 (  3)         LDA     CNTHI
-022B-85 03       I    53 (  3)         STA     CNT1H
+022B-85 03       I    53 (  2)         STA     CNT1H
 022D-A9 3C       I    54 (  2)         LDA     #%00111100  ; SHOW LEFT ARROW
 022F-8D 01 C0    I    55 (  4)         STA     PORT1A
 0232-A9 01       I    56 (  2)         LDA     #1
 0234-8D 00 C0    I    57 (  4)         STA     PORT1B
 0237-A9 00       I    58 (  2)         LDA     #0
-0239-85 02       I    59 (  3)         STA     CNTLO       ; CLEAR COUNTERS
-023B-85 01       I    60 (  3)         STA     CNTHI
+0239-85 02       I    59 (  2)         STA     CNTLO       ; CLEAR COUNTERS
+023B-85 01       I    60 (  2)         STA     CNTHI
 023D-20 8C 02    I    61 (  6)         JSR     PLAY        ; GET PLAYER 2S TIME.
 0240-A5 01       I    62 (  3)         LDA     CNTHI       ; GET PLAYER 2S COUNT AND...
 0242-C5 03       I    63 (  3)         CMP     CNT1H       ;  COMPARE TO PLAYER 1S.
@@ -115,7 +115,7 @@ CC03-            I    17       DDR3A   .EQ     VIA3+3
 028F-20 E4 02    I   103 (  6)         JSR     DELAY       ; RANDOM - LENGTH DELAY.
 0292-20 F5 02    I   104 (  6)         JSR     RANDOM      ; GET ANOTHER
 0295-29 0F       I   105 (  2)         AND     #$0F        ; KEEP UNDER 16 FOR USE AS
-0297-85 07       I   106 (  3)         STA     NUMBER      ;  NUMBER TO GUESS.
+0297-85 07       I   106 (  2)         STA     NUMBER      ;  NUMBER TO GUESS.
 0299-AA          I   107 (  2)         TAX                 ; USE AS INDEX TO ...
 029A-BD 08 03    I   108 ( 4*)         LDA     NUMTAB,X    ;  GET REVERSED PATTERN FROM TABLE
 029D-0D 00 C0    I   109 (  4)         ORA     PORT1B      ;  TO DISPLAY IN LEDS 12-15.
@@ -149,7 +149,7 @@ CC03-            I    17       DDR3A   .EQ     VIA3+3
 02CC-            I   137       ;
 02CC-A2 14       I   138 (  2) BLINK   LDX     #20         ; 20 BLINKS.
 02CE-86 01       I   139 (  3)         STX     CNTHI       ; SET BLINK COUNTER.
-02D0-85 02       I   140 (  3)         STA     CNTLO       ; BLINK REGISTER
+02D0-85 02       I   140 (  2)         STA     CNTLO       ; BLINK REGISTER
 02D2-A5 02       I   141 (  3) BLOOP   LDA     CNTLO       ; GET BLINK PATTERN
 02D4-4D 00 C0    I   142 (  4)         EOR     PORT1B      ; BLINK LEDS.
 02D7-8D 00 C0    I   143 (  4)         STA     PORT1B
@@ -162,7 +162,7 @@ CC03-            I    17       DDR3A   .EQ     VIA3+3
 02E4-            I   150       ; SUBROUTINE 'DELAY'
 02E4-            I   151       ; CONTENTS OF ACCUMULATOR DETERMINES DELAY LENGTH.
 02E4-            I   152       ;
-02E4-85 00       I   153 (  3) DELAY   STA     TEMP
+02E4-85 00       I   153 (  2) DELAY   STA     TEMP
 02E6-A0 10       I   154 (  2) DL1     LDY     #$10
 02E8-A2 FF       I   155 (  2) DL2     LDX     #$FF
 02EA-CA          I   156 (  2) DL3     DEX
@@ -180,7 +180,7 @@ CC03-            I    17       DDR3A   .EQ     VIA3+3
 02F6-A5 09       I   168 (  3)         LDA     SCR+1
 02F8-65 0C       I   169 (  3)         ADC     SCR+4
 02FA-65 0D       I   170 (  3)         ADC     SCR+5
-02FC-85 08       I   171 (  3)         STA     SCR
+02FC-85 08       I   171 (  2)         STA     SCR
 02FE-A2 04       I   172 (  2)         LDX     #4
 0300-B5 08       I   173 (  4) RNDLP   LDA     SCR,X
 0302-95 09       I   174 (  4)         STA     SCR+1,X

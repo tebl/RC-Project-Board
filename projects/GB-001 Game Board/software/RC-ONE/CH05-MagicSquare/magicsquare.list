@@ -8,7 +8,7 @@ CC00-                 10       VIA3    .EQ     $CC00
 0000-                 11
 0200-                 12               .OR     $0200
 0200-                 13               .TA     $0200
-0200-20 A4 02         14 (  6)         JSR     INITKEY
+0200-20 A4 02         14 (  6) RCONE   JSR     INITKEY
 0203-                 15               .IN     ../../common/CH05-MagicSquare/game.asm
 0203-            I     1       ;   'MAGIC SQUARE'
 0203-            I     2       ; KEYS 1-9 ON THE HEX KEYBOARD ARE EACH ASSOCIATED WITH ON LED IN THE 3X3

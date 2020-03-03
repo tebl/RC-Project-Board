@@ -1,5 +1,5 @@
         .CR     6502
-        .TF     getkey.hex,hex
+        .TF     getkey.hex,INT
         .LF     getkey.list
 ;
 ; FROM THE BOOK '6502 GAMES', EXPECTS THE SAME HARDWARE AS DECRIBED WITHIN IT.

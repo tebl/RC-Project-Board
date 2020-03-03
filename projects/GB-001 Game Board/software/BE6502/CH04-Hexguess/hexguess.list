@@ -24,11 +24,11 @@
 8003-            I    12       ; 6522 VIA #1 ADDRESSES:
 4004-            I    13       TIMER   .EQ     VIA1+4      ; LOW LATCH OF TIMER 1
 4003-            I    14       DDR1A   .EQ     VIA1+3      ; PORT A DATA DIRECTION REGISTER
-4003-            I    15       DDR1B   .EQ     VIA1+3      ; PORT B DATA DIRECTION REGISTER
+4002-            I    15       DDR1B   .EQ     VIA1+2      ; PORT B DATA DIRECTION REGISTER
 4001-            I    16       PORT1A  .EQ     VIA1+1      ; PORT A
 4000-            I    17       PORT1B  .EQ     VIA1        ; PORT B
 8003-            I    18       ; 6522 VIA #3 ADDRESSES:
-4C01-            I    19       DDR3A   .EQ     VIA3+1      ; PORT A DATA DIRECTION REGISTER
+4C03-            I    19       DDR3A   .EQ     VIA3+3      ; PORT A DATA DIRECTION REGISTER
 4C02-            I    20       DDR3B   .EQ     VIA3+2      ; PORT B DATA DIRECTION REGISTER
 4C00-            I    21       PORT3B  .EQ     VIA3        ; PORT B
 4C01-            I    22       PORT3A  .EQ     VIA3+1      ; PORT A
@@ -42,7 +42,7 @@
 8003-            I    30
 8003-A9 FF       I    31 (  2)         LDA     #$FF        ; SET UP DATA DIRECTION REGISTERS
 8005-8D 03 40    I    32 (  4)         STA     DDR1A
-8008-8D 03 40    I    33 (  4)         STA     DDR1B
+8008-8D 02 40    I    33 (  4)         STA     DDR1B
 800B-8D 02 4C    I    34 (  4)         STA     DDR3B
 800E-85 02       I    35 (  3)         STA     DUR         ; SET UP TONE DURATIONS.
 8010-A9 0A       I    36 (  2) START   LDA     #$0A        ; 10 GUESSES ALLOWED
@@ -178,7 +178,7 @@
 80DE-            I    32       ; THE CODE.
 80DE-            I    33       ;
 80DE-A9 00       I    34 (  2) INITKEY LDA     #0
-80E0-8D 01 4C    I    35 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+80E0-8D 03 4C    I    35 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
 80E3-A9 FF       I    36 (  2)         LDA     #$FF
 80E5-8D 02 4C    I    37 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
 80E8-60          I    38 (  6)         RTS

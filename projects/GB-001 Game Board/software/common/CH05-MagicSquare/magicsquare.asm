@@ -1,5 +1,5 @@
         .CR     6502
-        .TF     magicsquare.hex,hex
+        .TF     magicsquare.hex,INT
         .LF     magicsquare.list
 ;
 ; HEX GUESSING GAME USING '6502 GAMES' HARDWARE. BOARD SHOULD BE JUMPERED WITH

@@ -1,5 +1,5 @@
         .CR     65C02
-        .TF     translate.hex,hex
+        .TF     translate.hex,INT
         .LF     translate.list
 ;
 ; BINARY TRANSLATION GAME FOR THE BE6502 USING '6502 GAMES' HARDWARE. BOARD

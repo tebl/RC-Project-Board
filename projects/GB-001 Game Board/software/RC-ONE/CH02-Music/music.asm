@@ -1,5 +1,5 @@
         .CR     6502
-        .TF     music.hex,hex
+        .TF     music.hex,INT
         .LF     music.list
 ;
 ; MUSIC PLAYER FOR THE KIM-1 USING '6502 GAMES' HARDWARE. BOARD SHOULD BE 

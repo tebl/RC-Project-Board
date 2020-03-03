@@ -1,5 +1,5 @@
         .CR     6502
-        .TF     translate.hex,hex
+        .TF     translate.hex,INT
         .LF     translate.list
 ;
 ; BINARY TRANSLATION GAME FOR '6502 GAMES' HARDWARE. BOARD SHOULD BE JUMPERED

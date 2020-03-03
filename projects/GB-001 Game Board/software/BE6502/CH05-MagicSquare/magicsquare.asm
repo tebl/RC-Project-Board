@@ -1,5 +1,5 @@
         .CR     65C02
-        .TF     magicsquare.hex,hex
+        .TF     magicsquare.hex,INT
         .LF     magicsquare.list
 ;
 ; MAGIC SQUARE GAME FOR THE KIM-1 USING '6502 GAMES' HARDWARE. BOARD SHOULD BE

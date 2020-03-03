@@ -49,8 +49,9 @@ CC00-                 14       PORT3B  .EQ     VIA3        ;  CAN BE JUMPERED IF
 012F-            I    30       ; SUBROUTINE 'INITKEY'
 012F-            I    31       ; TAKES CARE OF INITIALIZING VIA #3 FOR USING WITH THE GETKEY ROUTINE FROM
 012F-            I    32       ; THE CODE.
-012F-A9 00       I    33 (  2) INITKEY LDA     #0
-0131-8D 03 CC    I    34 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
-0134-A9 FF       I    35 (  2)         LDA     #$FF
-0136-8D 02 CC    I    36 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
-0139-60          I    37 (  6)         RTS
+012F-            I    33       ;
+012F-A9 00       I    34 (  2) INITKEY LDA     #0
+0131-8D 03 CC    I    35 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+0134-A9 FF       I    36 (  2)         LDA     #$FF
+0136-8D 02 CC    I    37 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
+0139-60          I    38 (  6)         RTS

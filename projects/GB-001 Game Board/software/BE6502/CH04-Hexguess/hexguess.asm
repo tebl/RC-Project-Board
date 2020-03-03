@@ -1,5 +1,5 @@
         .CR     65C02
-        .TF     hexguess.hex,hex
+        .TF     hexguess.hex,INT
         .LF     hexguess.list
 ;
 ; MUSIC PLAYER FOR THE BE6502 USING '6502 GAMES' HARDWARE. BOARD SHOULD BE 

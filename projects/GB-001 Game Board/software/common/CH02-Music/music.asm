@@ -1,5 +1,5 @@
         .CR     6502
-        .TF     music.hex,hex
+        .TF     music.hex,INT
         .LF     music.list
 ;
 ; MUSIC PLAYER USING '6502 GAMES' HARDWARE. BOARD SHOULD BE JUMPERED WITH VIA

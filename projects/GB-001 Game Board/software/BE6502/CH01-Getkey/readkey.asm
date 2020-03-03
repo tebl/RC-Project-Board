@@ -1,5 +1,5 @@
         .CR     65C02
-        .TF     readkey.hex,hex
+        .TF     readkey.hex,INT
         .LF     readkey.list
 ;
 ; SMALL PROGRAM FOR THE BE6502 COMPUTER THAT SEEKS TO DEMONSTRATE THE GET KEY
