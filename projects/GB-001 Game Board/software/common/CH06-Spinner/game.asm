@@ -1,0 +1,116 @@
+;   'SPINNER'
+; PROGRAM TO TEST REACTION TIME OF PLAYER. BLIP OF LIGHT SPINS AROUND EDGE OF
+; 3X3 LED MATRIX, AND USER MUST PRESS CORRESPONDING KEY. IF, AFTER A NUMBER OF
+; SPINS, CORRECT KEY HAS NOT BEEN PRESSED, BLIP SPINS SLOWER. IF CORRECT KEY 
+; HAS BEEN PRESSED, BLIP SPINS FASTER. ALL LEDS LIGHT WHEN SUCCESSFUL KEYPRESS
+; OCCURS ON MAXIMUM SPEED.
+;
+; I/O:
+;
+DDR1A   .EQ     VIA1+3      ; PORT A DATA DIRECTION REGISTER
+DDR1B   .EQ     VIA1+2      ; PORT B DATA DIRECTION REGISTER
+PORT1A  .EQ     VIA1+1      ; PORT A
+PORT2   .EQ     VIA1
+PORT1B  .EQ     VIA1        ; PORT B
+DDR3A   .EQ     VIA3+3      ; PORT A DATA DIRECTION REGISTER
+DDR3B   .EQ     VIA3+2      ; PORT B DATA DIRECTION REGISTER
+PORT3B  .EQ     VIA3        ; PORT B    
+PORT3A  .EQ     VIA3+1      ; PORT A
+;
+; VARIABLE STORAGE.
+;
+ZP      .EQ     $00
+DURAT   .EQ     ZP          ; DURATION OF INTER-MOVEMENT DELAY.
+DIFCLT  .EQ     ZP+1        ; DIFFICULTY LEVEL.
+DNTST   .EQ     ZP+2        ; SET TO $01 IF KEY DOWN AT START OF 
+                            ; INTER-MOVEMENT DELAY.
+;
+; MAIN PROGRAM
+;
+START   LDA     #$FF        ; SET I/O REGISTERS.
+        STA     DDR1A
+        STA     DDR1B
+        STA     DDR3B
+        LDA     #8
+        STA     DIFCLT      ; SET DIFFICULTY
+        STA     DDR3A       ; SET KEYSTROBE PORT.
+NWGME   LDY     #0          ; RESET LOOP/BLIP COUNTER.
+LOOP    LDA     #0
+        STA     DNTST       ; CLEAR KEYDOWN INDICATOR.
+        STA     PORT1B      ; CLEAR HI LED PORT.
+        TYA                 ; USE LOWER 3 BITS OF MAIN COUNTER
+        AND     #$07        ; AS INDEX TO FIND LED PATTERN
+        TAX                 ; IN TABLE OF PATTERNS.
+        LDA     LTABLE,X    ; GET PATTERN FOR LED TO BE TURNED ON
+        STA     PORT1A      ; STORE IN LED PORT.
+        BNE     CHECK       ; IF PATTERN <> 0, SKIP.
+        LDA     #1          ; PATTERN=0, SO SET HI BIT.
+        STA     PORT1B
+CHECK   LDA     KYTBL,X     ; GET KEY# TO TEST FOR.
+        STA     PORT3B      ; STORE IN KEYPORT
+        BIT     PORT3A      ; STROBE HI?
+        BMI     DELAY       ; IF NOT, SKIP.
+INVALD  LDA     #01         ; STROBE HI; SET KEY DOWN MARKER.
+        STA     DNTST
+DELAY   LDA     #$80        ; GET # OF LOOP CYCLES (DELAY LENGTH)
+        STA     DURAT
+DL1     LDA     DIFCLT      ; MULTIPLY DIFFICULTY COUNTER
+        ASL     A           ;  BY FOUR TO DETERMINE DELAY
+        ASL     A           ;  LENGTH.
+        TAX
+DL2     ROL     DNTST       ; DELAY ACCORDING TO DIFCLT.
+        ROR     DNTST
+        DEX
+        BNE     DL2         ; LOOP UNTIL COUNT = 0
+        LDA     DNTST       ; GET KEY DOWN FLAG.
+        BNE     NOTST       ; IF KEY WAS DOWN AT BEGINNING OF
+                            ;  DELAY, DON'T TEST IT.
+        BIT     PORT3A      ; CHECK KEY STROBE
+        BPL     HIT         ; KEY HAS CLOSED DURING DELAY: HIT.
+NOTST   DEC     DURAT       ; COUNT DELAY LOOP DOWN.
+        BNE     DL1         ; LOOP IF NOT 0.
+        INY                 ; INCREMENT MAIN SPIN COUNTER.
+        BNE     LOOP        ; IF 32 LOOPS NOT DONE, DO NEXT LOOP EASIER
+        LDX     DIFCLT      ; NO HITS THIS TIME, MAKE NEXT EASIER.
+        INX
+        TXA                 ; MAKE SURE DIFFICULTY DOES NOT
+        CMP     #16         ;  EXCEED 15.
+        BNE     OK
+        LDA     #15
+OK      STA     DIFCLT
+        JSR     WAIT        ; PAUSE A BIT
+        JMP     NWGME       ; START NEW ROUND.
+HIT     JSR     WAIT        ; PAUSE A BIT.
+        DEC     DIFCLT      ; MAKE NEXT GAME HARDER.
+        BNE     NWGME       ; IF DIFFICULTY NOT 0 (HARDEST), PLAY NEXT GAME.
+        LDA     #$FF        ; PLAYER HAS MADE IT TO TOP
+        STA     PORT1A      ;  DIFFICULTY LEVEL, LIGHT ALL LEDS.
+        STA     PORT1B
+        JSR     WAIT        ; PAUSE A BIT.
+        JMP     START       ; PLAY ANOTHER GAME.
+;
+; SUBROUTINE 'WAIT'
+; SHORT DELAY.
+;
+WAIT    LDY     #$FF
+LP1     LDX     #$FF
+LP2     ROR     DURAT
+        ROL     DURAT
+        ROR     DURAT
+        ROL     DURAT
+        DEX
+        BNE     LP2
+        DEY
+        BNE     LP1
+        RTS
+;
+; TABLE OF PATTERNS TO BE SENT TO LED MATRIX AT EACH LOOP COUNTM SET FOR 
+; CLOCKWISE ROTATION STARTING AT LED #1.
+;
+LTABLE  .HS     01.02.04.20.00.80.40.08
+
+;
+; TABLE OF PATTERNS TO BE SENT TO KEYBOARD TO TEST IF LEDS ARE ON AT EACH
+; LOOP COUNT.
+;
+KYTBL   .HS     01.02.03.06.09.08.07.04

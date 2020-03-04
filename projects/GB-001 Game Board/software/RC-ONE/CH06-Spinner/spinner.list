@@ -1,0 +1,131 @@
+0000-                  4       ;
+0000-                  5       ; SPINNER IS A REACTION TIMING GAME USING '6502 GAMES' HARDWARE, AN LED CHASES
+0000-                  6       ; AROUND THE LED CUBE AND YOU SHOULD TRY TO HIT THE CORRESPONDING BUTTON.
+0000-                  7       ; BOARD SHOULD ; BE JUMPERED WITH VIA CHIPS AT THE ADDRESSES SPECIFIED BELOW.
+0000-                  8       ; OTHER THAN THAT THE CODE IS SHOULD BE UNCHANGED FROM THE BOOK THOUGH THERE
+0000-                  9       ; WILL BE SOME DIFFERENCES DUE TO ASSEMBLER USED.
+0000-                 10       ;
+C000-                 11       VIA1    .EQ     $C000
+CC00-                 12       VIA3    .EQ     $CC00
+0000-                 13
+0200-                 14               .OR     $0200
+0200-                 15               .TA     $0200
+0200-                 16       RCONE   .IN     ../../common/CH06-Spinner/game.asm
+0200-            I     1       ;   'SPINNER'
+0200-            I     2       ; PROGRAM TO TEST REACTION TIME OF PLAYER. BLIP OF LIGHT SPINS AROUND EDGE OF
+0200-            I     3       ; 3X3 LED MATRIX, AND USER MUST PRESS CORRESPONDING KEY. IF, AFTER A NUMBER OF
+0200-            I     4       ; SPINS, CORRECT KEY HAS NOT BEEN PRESSED, BLIP SPINS SLOWER. IF CORRECT KEY
+0200-            I     5       ; HAS BEEN PRESSED, BLIP SPINS FASTER. ALL LEDS LIGHT WHEN SUCCESSFUL KEYPRESS
+0200-            I     6       ; OCCURS ON MAXIMUM SPEED.
+0200-            I     7       ;
+0200-            I     8       ; I/O:
+0200-            I     9       ;
+C003-            I    10       DDR1A   .EQ     VIA1+3      ; PORT A DATA DIRECTION REGISTER
+C002-            I    11       DDR1B   .EQ     VIA1+2      ; PORT B DATA DIRECTION REGISTER
+C001-            I    12       PORT1A  .EQ     VIA1+1      ; PORT A
+C000-            I    13       PORT2   .EQ     VIA1
+C000-            I    14       PORT1B  .EQ     VIA1        ; PORT B
+CC03-            I    15       DDR3A   .EQ     VIA3+3      ; PORT A DATA DIRECTION REGISTER
+CC02-            I    16       DDR3B   .EQ     VIA3+2      ; PORT B DATA DIRECTION REGISTER
+CC00-            I    17       PORT3B  .EQ     VIA3        ; PORT B
+CC01-            I    18       PORT3A  .EQ     VIA3+1      ; PORT A
+0200-            I    19       ;
+0200-            I    20       ; VARIABLE STORAGE.
+0200-            I    21       ;
+0000-            I    22       ZP      .EQ     $00
+0000-            I    23       DURAT   .EQ     ZP          ; DURATION OF INTER-MOVEMENT DELAY.
+0001-            I    24       DIFCLT  .EQ     ZP+1        ; DIFFICULTY LEVEL.
+0002-            I    25       DNTST   .EQ     ZP+2        ; SET TO $01 IF KEY DOWN AT START OF
+0200-            I    26                                   ; INTER-MOVEMENT DELAY.
+0200-            I    27       ;
+0200-            I    28       ; MAIN PROGRAM
+0200-            I    29       ;
+0200-A9 FF       I    30 (  2) START   LDA     #$FF        ; SET I/O REGISTERS.
+0202-8D 03 C0    I    31 (  4)         STA     DDR1A
+0205-8D 02 C0    I    32 (  4)         STA     DDR1B
+0208-8D 02 CC    I    33 (  4)         STA     DDR3B
+020B-A9 08       I    34 (  2)         LDA     #8
+020D-85 01       I    35 (  2)         STA     DIFCLT      ; SET DIFFICULTY
+020F-8D 03 CC    I    36 (  4)         STA     DDR3A       ; SET KEYSTROBE PORT.
+0212-A0 00       I    37 (  2) NWGME   LDY     #0          ; RESET LOOP/BLIP COUNTER.
+0214-A9 00       I    38 (  2) LOOP    LDA     #0
+0216-85 02       I    39 (  2)         STA     DNTST       ; CLEAR KEYDOWN INDICATOR.
+0218-8D 00 C0    I    40 (  4)         STA     PORT1B      ; CLEAR HI LED PORT.
+021B-98          I    41 (  2)         TYA                 ; USE LOWER 3 BITS OF MAIN COUNTER
+021C-29 07       I    42 (  2)         AND     #$07        ; AS INDEX TO FIND LED PATTERN
+021E-AA          I    43 (  2)         TAX                 ; IN TABLE OF PATTERNS.
+021F-BD 95 02    I    44 ( 4*)         LDA     LTABLE,X    ; GET PATTERN FOR LED TO BE TURNED ON
+0222-8D 01 C0    I    45 (  4)         STA     PORT1A      ; STORE IN LED PORT.
+0225-D0 05       I    46 (2**)         BNE     CHECK       ; IF PATTERN <> 0, SKIP.
+0227-A9 01       I    47 (  2)         LDA     #1          ; PATTERN=0, SO SET HI BIT.
+0229-8D 00 C0    I    48 (  4)         STA     PORT1B
+022C-BD 9D 02    I    49 ( 4*) CHECK   LDA     KYTBL,X     ; GET KEY# TO TEST FOR.
+022F-8D 00 CC    I    50 (  4)         STA     PORT3B      ; STORE IN KEYPORT
+0232-2C 01 CC    I    51 (  4)         BIT     PORT3A      ; STROBE HI?
+0235-30 04       I    52 (2**)         BMI     DELAY       ; IF NOT, SKIP.
+0237-A9 01       I    53 (  2) INVALD  LDA     #01         ; STROBE HI; SET KEY DOWN MARKER.
+0239-85 02       I    54 (  2)         STA     DNTST
+023B-A9 80       I    55 (  2) DELAY   LDA     #$80        ; GET # OF LOOP CYCLES (DELAY LENGTH)
+023D-85 00       I    56 (  2)         STA     DURAT
+023F-A5 01       I    57 (  3) DL1     LDA     DIFCLT      ; MULTIPLY DIFFICULTY COUNTER
+0241-0A          I    58 (  2)         ASL     A           ;  BY FOUR TO DETERMINE DELAY
+0242-0A          I    59 (  2)         ASL     A           ;  LENGTH.
+0243-AA          I    60 (  2)         TAX
+0244-26 02       I    61 (  5) DL2     ROL     DNTST       ; DELAY ACCORDING TO DIFCLT.
+0246-66 02       I    62 (  5)         ROR     DNTST
+0248-CA          I    63 (  2)         DEX
+0249-D0 F9       I    64 (2**)         BNE     DL2         ; LOOP UNTIL COUNT = 0
+024B-A5 02       I    65 (  3)         LDA     DNTST       ; GET KEY DOWN FLAG.
+024D-D0 05       I    66 (2**)         BNE     NOTST       ; IF KEY WAS DOWN AT BEGINNING OF
+024F-            I    67                                   ;  DELAY, DON'T TEST IT.
+024F-2C 01 CC    I    68 (  4)         BIT     PORT3A      ; CHECK KEY STROBE
+0252-10 19       I    69 (2**)         BPL     HIT         ; KEY HAS CLOSED DURING DELAY: HIT.
+0254-C6 00       I    70 (  5) NOTST   DEC     DURAT       ; COUNT DELAY LOOP DOWN.
+0256-D0 E7       I    71 (2**)         BNE     DL1         ; LOOP IF NOT 0.
+0258-C8          I    72 (  2)         INY                 ; INCREMENT MAIN SPIN COUNTER.
+0259-D0 B9       I    73 (2**)         BNE     LOOP        ; IF 32 LOOPS NOT DONE, DO NEXT LOOP EASIER
+025B-A6 01       I    74 (  3)         LDX     DIFCLT      ; NO HITS THIS TIME, MAKE NEXT EASIER.
+025D-E8          I    75 (  2)         INX
+025E-8A          I    76 (  2)         TXA                 ; MAKE SURE DIFFICULTY DOES NOT
+025F-C9 10       I    77 (  2)         CMP     #16         ;  EXCEED 15.
+0261-D0 02       I    78 (2**)         BNE     OK
+0263-A9 0F       I    79 (  2)         LDA     #15
+0265-85 01       I    80 (  2) OK      STA     DIFCLT
+0267-20 82 02    I    81 (  6)         JSR     WAIT        ; PAUSE A BIT
+026A-4C 12 02    I    82 (  3)         JMP     NWGME       ; START NEW ROUND.
+026D-20 82 02    I    83 (  6) HIT     JSR     WAIT        ; PAUSE A BIT.
+0270-C6 01       I    84 (  5)         DEC     DIFCLT      ; MAKE NEXT GAME HARDER.
+0272-D0 9E       I    85 (2**)         BNE     NWGME       ; IF DIFFICULTY NOT 0 (HARDEST), PLAY NEXT GAME.
+0274-A9 FF       I    86 (  2)         LDA     #$FF        ; PLAYER HAS MADE IT TO TOP
+0276-8D 01 C0    I    87 (  4)         STA     PORT1A      ;  DIFFICULTY LEVEL, LIGHT ALL LEDS.
+0279-8D 00 C0    I    88 (  4)         STA     PORT1B
+027C-20 82 02    I    89 (  6)         JSR     WAIT        ; PAUSE A BIT.
+027F-4C 00 02    I    90 (  3)         JMP     START       ; PLAY ANOTHER GAME.
+0282-            I    91       ;
+0282-            I    92       ; SUBROUTINE 'WAIT'
+0282-            I    93       ; SHORT DELAY.
+0282-            I    94       ;
+0282-A0 FF       I    95 (  2) WAIT    LDY     #$FF
+0284-A2 FF       I    96 (  2) LP1     LDX     #$FF
+0286-66 00       I    97 (  5) LP2     ROR     DURAT
+0288-26 00       I    98 (  5)         ROL     DURAT
+028A-66 00       I    99 (  5)         ROR     DURAT
+028C-26 00       I   100 (  5)         ROL     DURAT
+028E-CA          I   101 (  2)         DEX
+028F-D0 F5       I   102 (2**)         BNE     LP2
+0291-88          I   103 (  2)         DEY
+0292-D0 F0       I   104 (2**)         BNE     LP1
+0294-60          I   105 (  6)         RTS
+0295-            I   106       ;
+0295-            I   107       ; TABLE OF PATTERNS TO BE SENT TO LED MATRIX AT EACH LOOP COUNTM SET FOR
+0295-            I   108       ; CLOCKWISE ROTATION STARTING AT LED #1.
+0295-            I   109       ;
+0295-01 02 04 20 
+     00 80 40 08 I   110       LTABLE  .HS     01.02.04.20.00.80.40.08
+029D-            I   111
+029D-            I   112       ;
+029D-            I   113       ; TABLE OF PATTERNS TO BE SENT TO KEYBOARD TO TEST IF LEDS ARE ON AT EACH
+029D-            I   114       ; LOOP COUNT.
+029D-            I   115       ;
+029D-01 02 03 06 
+     09 08 07 04 I   116       KYTBL   .HS     01.02.03.06.09.08.07.04
