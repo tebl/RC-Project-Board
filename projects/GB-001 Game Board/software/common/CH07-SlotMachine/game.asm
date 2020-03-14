@@ -37,8 +37,6 @@ RND     .EQ     ZP+20       ; SCRATCHPAD FOR RND # GENERATOR.
 ;
 ; MAIN PROGRAM
 ;
-GETKEY  .EQ     $100
-
         LDA     #$FF        ; SET UP PORTS.
         STA     DDR1A
         STA     DDR1B

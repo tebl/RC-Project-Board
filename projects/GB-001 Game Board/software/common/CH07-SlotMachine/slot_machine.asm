@@ -12,4 +12,6 @@ VIA3    .EQ     $CC00
 
         .OR     $0200
         .TA     $0200
-BEGIN   .IN     game.asm
+BEGIN   JSR     INITKEY
+        .IN     game.asm
+        .IN     ../CH01-Getkey/getkey_routine.asm
