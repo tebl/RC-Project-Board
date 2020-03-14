@@ -1,5 +1,41 @@
-EESchema Schematic File Version 4
-EELAYER 30 0
+EESchema Schematic File Version 2
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:mounting
+LIBS:rc1_backplane
+LIBS:6522
+LIBS:breadboard
+LIBS:modules
+LIBS:arduino_backplane
+LIBS:PP Arduino-cache
+EELAYER 25 0
 EELAYER END
 $Descr A3 16535 11693
 encoding utf-8
@@ -14,7 +50,7 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L mounting:Mounting M1
+L Mounting M1
 U 1 1 5D63FD8B
 P 15525 575
 F 0 "M1" H 15525 675 50  0001 C CNN
@@ -25,7 +61,7 @@ F 3 "" H 15525 575 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L mounting:Mounting M2
+L Mounting M2
 U 1 1 5D63FDB2
 P 15650 575
 F 0 "M2" H 15650 675 50  0001 C CNN
@@ -36,7 +72,7 @@ F 3 "" H 15650 575 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L mounting:Mounting M3
+L Mounting M3
 U 1 1 5D63FDD2
 P 15775 575
 F 0 "M3" H 15775 675 50  0001 C CNN
@@ -47,7 +83,7 @@ F 3 "" H 15775 575 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L mounting:Mounting M4
+L Mounting M4
 U 1 1 5D63FDF2
 P 15900 575
 F 0 "M4" H 15900 675 50  0001 C CNN
@@ -62,7 +98,7 @@ Text Notes 12175 10925 0    60   ~ 0
 Text Notes 15400 11075 0    60   ~ 0
 A
 $Comp
-L arduino_backplane:Arduino_Backplane J1
+L Arduino_Backplane J1
 U 1 1 5DC149FA
 P 15175 5000
 F 0 "J1" H 15175 7000 50  0000 C CNN
@@ -129,7 +165,7 @@ Entry Wire Line
 Entry Wire Line
 	10650 3000 10750 3100
 $Comp
-L power:VCC #PWR01
+L VCC #PWR01
 U 1 1 5DD0D2FE
 P 10250 4575
 F 0 "#PWR01" H 10250 4425 50  0001 C CNN
@@ -140,7 +176,7 @@ F 3 "" H 10250 4575 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:GND #PWR02
+L GND #PWR02
 U 1 1 5DD0D304
 P 10175 4775
 F 0 "#PWR02" H 10175 4525 50  0001 C CNN
@@ -175,7 +211,7 @@ PIN39
 Text Notes 11850 10350 0    60   ~ 0
 After building a few things on breadboards with a microcontroller, I wanted to do the\nsame with the computer instead so I created this as an easy work-surface to do those\nkind of things. This platform board has been adapted for use with my 6502 and 68xx-\nbased SBCs.
 $Comp
-L breadboard:Breadboard BB1
+L Breadboard BB1
 U 1 1 5DE6F52B
 P 6975 5300
 F 0 "BB1" H 6975 5775 60  0000 C CNN
@@ -186,7 +222,7 @@ F 3 "" H 6925 5300 60  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:VCC #PWR03
+L VCC #PWR03
 U 1 1 5DE70879
 P 5800 1075
 F 0 "#PWR03" H 5800 925 50  0001 C CNN
@@ -197,7 +233,7 @@ F 3 "" H 5800 1075 50  0001 C CNN
 	-1   0    0    -1  
 $EndComp
 $Comp
-L power:GND #PWR04
+L GND #PWR04
 U 1 1 5DE70A6F
 P 6025 3350
 F 0 "#PWR04" H 6025 3100 50  0001 C CNN
@@ -208,7 +244,7 @@ F 3 "" H 6025 3350 50  0001 C CNN
 	-1   0    0    -1  
 $EndComp
 $Comp
-L conn:Conn_01x10 J5
+L Conn_01x10 J5
 U 1 1 5DE736F3
 P 5825 4775
 F 0 "J5" H 5825 5275 50  0000 C CNN
@@ -219,7 +255,7 @@ F 3 "" H 5825 4775 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L conn:Conn_01x10 J6
+L Conn_01x10 J6
 U 1 1 5DE7382E
 P 5825 6075
 F 0 "J6" H 5825 6575 50  0000 C CNN
@@ -230,7 +266,7 @@ F 3 "" H 5825 6075 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L conn:Conn_01x02 J7
+L Conn_01x02 J7
 U 1 1 5DE7AFE7
 P 7900 4875
 F 0 "J7" H 7900 4975 50  0000 C CNN
@@ -241,7 +277,7 @@ F 3 "" H 7900 4875 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:VCC #PWR05
+L VCC #PWR05
 U 1 1 5DE7B0A8
 P 7625 4800
 F 0 "#PWR05" H 7625 4650 50  0001 C CNN
@@ -252,7 +288,7 @@ F 3 "" H 7625 4800 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:GND #PWR06
+L GND #PWR06
 U 1 1 5DE7B331
 P 7625 5050
 F 0 "#PWR06" H 7625 4800 50  0001 C CNN
@@ -263,7 +299,7 @@ F 3 "" H 7625 5050 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L conn:Conn_01x02 J8
+L Conn_01x02 J8
 U 1 1 5DE7B3E2
 P 7900 5625
 F 0 "J8" H 7900 5725 50  0000 C CNN
@@ -274,7 +310,7 @@ F 3 "" H 7900 5625 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:VCC #PWR07
+L VCC #PWR07
 U 1 1 5DE7B3E8
 P 7625 5550
 F 0 "#PWR07" H 7625 5400 50  0001 C CNN
@@ -285,7 +321,7 @@ F 3 "" H 7625 5550 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:GND #PWR08
+L GND #PWR08
 U 1 1 5DE7B3F2
 P 7625 5800
 F 0 "#PWR08" H 7625 5550 50  0001 C CNN
@@ -296,7 +332,7 @@ F 3 "" H 7625 5800 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L modules:Arduino_Nano_v3.x A1
+L Arduino_Nano_v3.x A1
 U 1 1 5E0AA50A
 P 6075 2200
 F 0 "A1" H 5875 3225 50  0000 R CNN
@@ -312,7 +348,7 @@ NoConn ~ 5625 6475
 NoConn ~ 5625 6575
 NoConn ~ 6175 1200
 $Comp
-L arduino_backplane:Arduino_Backplane J3
+L Arduino_Backplane J3
 U 1 1 5DD0D32D
 P 11350 5000
 F 0 "J3" H 11350 7000 50  0000 C CNN
@@ -693,7 +729,7 @@ Entry Wire Line
 Entry Wire Line
 	5075 2800 5175 2900
 $Comp
-L power:+3.3V #PWR09
+L +3.3V #PWR09
 U 1 1 5E18E247
 P 6050 1075
 F 0 "#PWR09" H 6050 925 50  0001 C CNN
@@ -704,7 +740,7 @@ F 3 "" H 6050 1075 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:+3.3V #PWR010
+L +3.3V #PWR010
 U 1 1 5E18F097
 P 10475 4550
 F 0 "#PWR010" H 10475 4400 50  0001 C CNN
@@ -720,6 +756,10 @@ Wire Wire Line
 	11150 5300 10750 5300
 Wire Bus Line
 	10650 3800 10075 3800
+Wire Bus Line
+	10650 5000 10650 7000
+Wire Bus Line
+	10650 3000 10650 4400
 Wire Wire Line
 	10750 6400 11150 6400
 Wire Wire Line
@@ -893,7 +933,7 @@ Wire Wire Line
 Wire Wire Line
 	7625 5725 7625 5800
 Wire Wire Line
-	6075 3275 6025 3275
+	6075 3275 5975 3275
 Wire Wire Line
 	5975 3200 5975 3275
 Wire Wire Line
@@ -905,6 +945,10 @@ Wire Wire Line
 	14975 5300 14575 5300
 Wire Bus Line
 	13900 3800 14475 3800
+Wire Bus Line
+	14475 5000 14475 7000
+Wire Bus Line
+	14475 3000 14475 4400
 Wire Wire Line
 	14575 6400 14975 6400
 Wire Wire Line
@@ -1006,7 +1050,7 @@ Wire Wire Line
 Wire Wire Line
 	5500 1700 5500 1600
 Wire Wire Line
-	5175 1600 5500 1600
+	5175 1600 5575 1600
 Connection ~ 5500 1600
 Wire Wire Line
 	5175 2200 5575 2200
@@ -1057,6 +1101,12 @@ Wire Wire Line
 Wire Wire Line
 	6025 3350 6025 3275
 Wire Bus Line
+	5075 1500 5075 2800
+Wire Bus Line
+	7075 1700 7075 3000
+Wire Bus Line
+	5075 4475 5075 5975
+Wire Bus Line
 	5000 5200 5075 5200
 Wire Bus Line
 	5000 875  5000 5200
@@ -1083,7 +1133,7 @@ Wire Wire Line
 Wire Wire Line
 	10475 4600 10475 4550
 $Comp
-L power:VCC #PWR011
+L VCC #PWR011
 U 1 1 5E190152
 P 14075 4575
 F 0 "#PWR011" H 14075 4425 50  0001 C CNN
@@ -1094,7 +1144,7 @@ F 3 "" H 14075 4575 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:GND #PWR012
+L GND #PWR012
 U 1 1 5E190158
 P 14000 4775
 F 0 "#PWR012" H 14000 4525 50  0001 C CNN
@@ -1105,7 +1155,7 @@ F 3 "" H 14000 4775 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L power:+3.3V #PWR013
+L +3.3V #PWR013
 U 1 1 5E19015E
 P 14300 4550
 F 0 "#PWR013" H 14300 4400 50  0001 C CNN
@@ -1127,34 +1177,4 @@ Wire Wire Line
 	14000 4700 14000 4775
 Wire Wire Line
 	14300 4600 14300 4550
-Wire Wire Line
-	6025 3275 5975 3275
-Wire Wire Line
-	5500 1600 5575 1600
-Wire Bus Line
-	5075 1500 5075 2200
-Wire Bus Line
-	10650 3800 10650 4400
-Wire Bus Line
-	14475 3800 14475 4400
-Wire Bus Line
-	7075 1700 7075 2200
-Wire Bus Line
-	5075 2200 5075 2800
-Wire Bus Line
-	10650 5000 10650 5800
-Wire Bus Line
-	10650 3000 10650 3800
-Wire Bus Line
-	14475 5000 14475 5800
-Wire Bus Line
-	14475 3000 14475 3800
-Wire Bus Line
-	10650 5800 10650 7000
-Wire Bus Line
-	14475 5800 14475 7000
-Wire Bus Line
-	5075 4475 5075 5975
-Wire Bus Line
-	7075 2200 7075 3000
 $EndSCHEMATC
