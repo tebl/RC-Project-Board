@@ -1,0 +1,218 @@
+;   'ECHO'
+; PATTERN/TONE RECALL AND ESP TEST PROGRAM. THE USER GUESSES A PATTERN OF LIT
+; LEDS AND THEIR ASSOCIATED TONES. THE TONE/LIGHT COMBINATION CAN BE PLAYED,
+; SO THAT THE USER MUST REMEMBER IT AND REPLICATE IT CORRECTLY.
+;
+; OPERATING THE PROGRAM:
+;  THE BOTTOM ROW OF LEDS IS AN INDICATOR FOR PROGRAM STATUS; THE LEFT-MOST
+;  ONE ($10) INDICATES THAT THE PROGRAM IS EXPECTING THE USER TO INPUT THE
+;  LENGTH OF THE SEQUENCE TO BE GUESSED. THE SECOND FROM THE LEFT ($11) 
+;  INDICATES THAT THE PROGRAM EXPECTS EITHER A GUESS (1-9), THE COMMAND TO
+;  RESTART THE GAME (0), OR THE COMMAND TO PLAY THE SEQUECE (A-F). THE KEYS
+;  ARE ASSOCIATED WITH THE LEDS 1-9.
+;
+;  LOOKING AT THE SEQUENCE WHILE IN THE MIDDLE OF GUESSING IT WILL EREASE ALL
+;  PREVIOUS GUESSES (RESET GESNO AND ERRS TO 0). AFTER A WIN, THE PROGRAM
+;  RESTARTS.
+
+;
+; I/O:
+;
+PORT1B  .EQ     VIA1        ; PORT B
+PORT1A  .EQ     VIA1+1      ; PORT A
+DDR1B   .EQ     VIA1+2      ; PORT B DATA DIRECTION REGISTER
+DDR1A   .EQ     VIA1+3      ; PORT A DATA DIRECTION REGISTER
+T1CL    .EQ     VIA1+4
+
+PORT3B  .EQ     VIA3        ; PORT B    
+PORT3A  .EQ     VIA3+1      ; PORT A
+DDR3B   .EQ     VIA3+2      ; PORT B DATA DIRECTION REGISTER
+DDR3A   .EQ     VIA3+3      ; PORT A DATA DIRECTION REGISTER
+
+;
+; VARIABLE STORAGE.
+;
+ZP      .EQ     $00
+DIGITS  .EQ     ZP          ; NUMBER OF DIGITS IN SEQUENCE
+GESNO   .EQ     ZP+1        ; NUMBER OF CORRECT GUESS, SPECIFIES 
+                            ; WHERE THE USER IS IN THE SERIES.
+ERRS    .EQ     ZP+2        ; NUMBER OF ERRORS MADE IN THE SERIES.
+DUR     .EQ     ZP+3        ; TEMPORARY STORAGE FOR NOTE DURATION.
+FREQ    .EQ     ZP+4        ; TEMPORARY STORAGE FOR NOTE FREQUENCY.
+TEMP    .EQ     ZP+5        ; TEMPORARY STORAGE FOR X REGISTER.
+TABLE   .EQ     ZP+6        ; STORAGE FOR SEQUECE
+RND     .EQ     ZP+15       ; SCRATCHPAD FOR RANDOM # GENERATOR
+
+START   LDA     #$FF        ; SET UP DATA DIRECTION REGISTERS.
+        STA     DDR1A
+        STA     DDR1B
+        STA     DDR3B
+        LDA     #0          ; CLEAR VARIABLE STORAGES
+        STA     PORT1A      ; ... AND LEDS
+        STA     ERRS
+        STA     GESNO
+        LDA     T1CL        ; GET SEED FOR RND # GENERATOR
+        STA     RND+1       ;  AND STORE IN RND SCRATCHPAD.
+        STA     RND+4       
+        LDA     #%010       ; TURN LED #10 ON TO INDICATE
+        STA     PORT1B      ; NEED FOR LENGTH INPUT.
+DIGKEY  JSR     GETKEY      ; GET LENGTH OF SERIES
+        CMP     #0          ; IS IT 0?
+        BEQ     DIGKEY      ; IF YES, GET ANOTHER.
+        CMP     #10         ; LENGTH GREATER THAN 9?
+        BPL     DIGKEY      ; IF YES, GET ANOTHER.
+        STA     DIGITS      ; SAVE VALID LENGTH
+        TAX                 ; USE LENGTH-1 AS INDEX FOR FILLING...
+        DEX                 ; ... SERIES W/RANDOM VALUES.
+FILL    STX     TEMP        ; SAVE X FROM 'RANDOM'
+        JSR     RANDOM
+        LDX     TEMP        ; RESTORE X
+        SED                 ; DO A DECIMAL ADJUST
+        CLC
+        ADC     #0
+        CLD
+        AND     #$0F        ; REMOVE UPPER NIBBLE SO NUMBER IS <10
+        BEQ     FILL        ; # CAN'T BE ZERO
+        STA     TABLE,X     ; STORE # IN TABLE
+        DEX                 ; DECREMENT FOR NEXT
+        BPL     FILL        ; LOOP IF NOT DONE
+KEY     LDA     #0          ; CLEAR LEDS
+        STA     PORT1A
+        LDA     #%0100      ; TURN INPUT INDICATOR ON.
+        STA     PORT1B
+        JSR     GETKEY      ; GET GUESS OR PLAY COMMAND
+        CMP     #0          ; IS IT 0?
+STRTJP  BEQ     START       ; IF YES, RESTART.
+        CMP     #10         ; NUMBER < 10 ?
+        BMI     EVAL        ; IF YES, EVALUATE GUESS.
+;
+; ROUTINE TO DISPLAY SERIES TO BE GUESSED BY LIGHTING LEDS AND PLAYING
+; TONES IN SEQUECE.
+;
+SHOW    LDX     #0
+        STX     GESNO       ; CLEAR CURRENT GUESS NUMBER
+        STX     ERRS        ; CLEAR CURRENT ERROR NUMBER
+SHOWLP  LDA     TABLE,X     ; GET X-TH ENTRY IN SERIES TABLE.
+        STX     TEMP        ; SAVE X
+        JSR     LIGHT       ; LIGHT LED # (TABLE(X))
+        JSR     PLAY        ; PLAY TONE # (TABLE(X))
+        LDY     #$FF        ; SET LOOP COUNTER FOR DELAY
+DELAY   ROR     DUR         ; WASTE TIME
+        ROL     DUR
+        DEY                 ; COUNT DOWN
+        BNE     DELAY       ; IF NOT DONE, WASTE SOME MORE TIME
+        LDX     TEMP        ; RESTORE X
+        INX                 ; INCREMENT INDEX TO SHOW NEXT
+        CPX     DIGITS      ; ALL DIGITS SHOWN?
+        BNE     SHOWLP      ; IF NOT, SHOW NEXT.
+        BEQ     KEY         ; DONE, SO GET NEXT INPUT.
+;
+; ROUTINE TO EVALUATE GUESSES OF PLAYER.
+;
+EVAL    LDX     GESNO       ; GET NUMBER OF GUESS.
+        CMP     TABLE,X     ; GUESS = CORRESPONDING DIGIT = ?
+        BEQ     CORRECT     ; IF YES, SHOW PLAYER.
+WRONG   INC     ERRS        ; GUESS WRONG, ANOTHER ERROR FOR THE TALLY.
+        LDA     #$80        ; DURATION FOR LOW TONE TO INDICATE A    
+        STA     DUR         ;  BAD GUESS.
+        LDA     #$FF        ; FREQUENCY CONSTANT
+        JSR     PLYTON      ; PLAY IT
+        BEQ     ENDCHK      ; CHECK FOR ENDGAME
+CORRECT JSR     LIGHT       ; VALIDATE CORRECT GUESS...
+        JSR     PLAY
+ENDCHK  INC     GESNO       ; ONE MORE GUESS TAKEN.
+        LDA     DIGITS
+        CMP     GESNO       ; ALL DIGITS GUESSED?
+        BNE     KEY         ; IF NOT, GET NEXT.
+        LDA     ERRS        ; GET NUMBER OF ERRORS.
+        CMP     #0          ; ANY ERRORS?
+        BEQ     WIN         ; IF NOT, PLAYER WINS.
+LOSE    JSR     LIGHT       ; SHOW NUMBER OF ERRORS.
+        LDA     #9          ; PLAY 8 DESCENDING TONES
+LOSELP  PHA
+        JSR     PLAY
+        PLA
+        SEC
+        SBC     #1
+        BNE     LOSELP
+        STA     GESNO       ; CLEAR VARIABLES
+        STA     ERRS
+        BEQ     KEY         ; GET NEXT GUESS SEQUECE
+WIN     LDA     #$FF        ; TURN ALL LEDS ON FOR WIN
+        STA     PORT1A
+        STA     PORT1B
+        LDA     #1          ; PLAY 8 ASCENDING TONES
+WINLP   PHA
+        JSR     PLAY
+        PLA
+        CLC
+        ADC     #01
+        CMP     #10
+        BNE     WINLP
+        BEQ     STRTJP      ; USE DOUBLE-JUMP FOR RESTART
+;
+; SUBROUTINE 'LIGHT'
+; ROUTINE TO LIGHT N-TH LED, WHERE N IS THE NUMBER PASSED AS A PARAMETER IN
+; THE ACCUMULATOR.
+;
+LIGHT   PHA                 ; SAVE A
+        TAY                 ; USE AS COUNTER IN Y
+        LDA     #0          ; CLEAR A FOR BIT SHIFT
+        STA     PORT1B      ; CLEAR HI LEDS.
+        SEC                 ; GENERATE HI BIT TO SHIFT LEFT.
+LTSHFT  ROL     A           ; MOVE HI BIT LEFT.
+        DEY                 ; DECREMENT COUNTER
+        BNE     LTSHFT      ; SHIFTS DONE?
+        STA     PORT1A      ; STORE CORRECT PATTERN
+        BCC     LTCC        ; BIT 9 NOT HI, DONE.
+        LDA     #1
+        STA     PORT1B      ; TURN LED 9 ON.
+LTCC    PLA                 ; RESTORE A
+        RTS
+;
+; SUBROUTINE 'RANDOM'
+; RANDOM NUMBER GENERATOR, RETURNS WITH NEW RANDOM NUMBER IN ACCUMULATOR.
+;
+RANDOM  SEC
+        LDA     RND+1
+        ADC     RND+4
+        ADC     RND+5
+        STA     RND
+        LDX     #4
+RNDLP   LDA     RND,X
+        STA     RND+1,X
+        DEX
+        BPL     RNDLP
+        RTS
+;
+; SUBROUTINE 'PLAY'
+; ROUTINE TO PLAY TONES WHOSE NUMBER IS PASSED IN BY ACCUMULATOR. IF ENTERED
+; AT PLYTON, IT WILL PLAY TONE WHOSE LENGTH IS IN DUR, FREQUENCY IN THE 
+; ACCUMULATOR INSTEAD.
+PLAY    TAY                 ; USE TONE # AS INDEX...
+        DEY                 ; DECREMENT TO MATCH TABLES
+        LDA     DURTAB,Y    ; GET DURATION FOR TONE N-TH TONE
+        STA     DUR         ; SAVE IT.
+        LDA     NOTAB,Y     ; GET FREQUENCY CONSTANT FOR N-TH TONE
+PLYTON  STA     FREQ        ; SAVE IT.    
+        LDA     #0          ; SET SPKR PORT LO.
+        STA     PORT3B
+        LDX     DUR         ; GET DURATION IN NUMBER OF 1/2 CYCLES.
+FL2     LDY     FREQ        ; GET FREQUENCY
+FL1     DEY                 ; COUNT DOWN DELAY...
+        CLC                 ; WASTE TIME
+        BCC     FL0
+FL0     BNE     FL1         ; LOOP FOR DELAY
+        EOR     #$FF        ; COMPLEMENT PORT
+        STA     PORT3B
+        DEX                 ; COUNT DOWN DURATION...
+        BNE     FL2         ; LOOP UNTIL NOTE OVER.
+        RTS                 ; DONE.
+;
+; TABLE FOR NOTE FREQUENCIES.
+;
+NOTAB   .HS     C9.BE.A9.96.8E.7E.70.64.5E
+;
+; TABLE FOR NOTE DURATIONS.
+;
+DURTAB  .HS     6B.72.80.8F.94.AA.BF.D7.E4

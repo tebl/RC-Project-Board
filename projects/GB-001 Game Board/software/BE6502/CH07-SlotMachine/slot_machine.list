@@ -1,0 +1,368 @@
+0000-                  4       ;
+0000-                  5       ; SLOT MACHINE GAME FOR THE '6502 GAMES' HARDWARE, BOARD SHOULD BE JUMPERED
+0000-                  6       ; WITH VIA CHIPS AT THE ADDRESSES SPECIFIED BELOW. OTHER THAN THAT THE CODE
+0000-                  7       ; IS SHOULD BE UNCHANGED FROM THE BOOK THOUGH THERE WILL BE SOME DIFFERENCES
+0000-                  8       ; DUE TO ASSEMBLER USED.
+0000-                  9       ;
+4000-                 10       VIA1    .EQ     $4000       ; GAME BOARD (VIA #1)
+4C00-                 11       VIA3    .EQ     $4C00       ; GAME BOARD (VIA #3)
+0000-                 12
+8000-                 13               .OR     $8000
+8000-                 14               .TA     $0000
+8000-20 D0 81         15 (  6) BE6502  JSR     INITKEY
+8003-                 16               .IN     ../../common/CH07-SlotMachine/game.asm
+8003-            I     1       ;   'SLOT MACHINE'
+8003-            I     2       ; SLOT MACHINE SIMULATOR PROGRAM, PRESS ANY KEY TO START 'SPIN'. SCORE
+8003-            I     3       ; DETERMINED BY ARRAY 'SCORTB'. 8 POINTS INITIAL SCORE, ONE POINT PENALTY
+8003-            I     4       ; FOR EACH BAD SPIN.
+8003-            I     5
+8003-            I     6       ;
+8003-            I     7       ; I/O:
+8003-            I     8       ;
+4000-            I     9       PORT1B  .EQ     VIA1        ; PORT B
+4001-            I    10       PORT1A  .EQ     VIA1+1      ; PORT A
+4002-            I    11       DDR1B   .EQ     VIA1+2      ; PORT B DATA DIRECTION REGISTER
+4003-            I    12       DDR1A   .EQ     VIA1+3      ; PORT A DATA DIRECTION REGISTER
+4004-            I    13       T1CL    .EQ     VIA1+4
+8003-            I    14
+4C00-            I    15       PORT3B  .EQ     VIA3        ; PORT B
+4C01-            I    16       PORT3A  .EQ     VIA3+1      ; PORT A
+4C02-            I    17       DDR3B   .EQ     VIA3+2      ; PORT B DATA DIRECTION REGISTER
+4C03-            I    18       DDR3A   .EQ     VIA3+3      ; PORT A DATA DIRECTION REGISTER
+8003-            I    19
+8003-            I    20       ;
+8003-            I    21       ; VARIABLE STORAGE.
+8003-            I    22       ;
+0000-            I    23       ZP      .EQ     $00
+0000-            I    24       TEMP    .EQ     ZP          ; TEMPORARY STORAGE.
+0001-            I    25       SCORTP  .EQ     ZP+1        ; TEMPORARY SCORE STORAGE
+0002-            I    26       SCORE   .EQ     ZP+2        ; SCORE.
+0003-            I    27       DUR     .EQ     ZP+3        ; DURATION OF TONES.
+0004-            I    28       FREQ    .EQ     ZP+4
+0005-            I    29       SPEEDS  .EQ     ZP+5        ; SPEEDS OF REVOLUTION FOR LEDS IN COLUMNS
+0008-            I    30       INDX    .EQ     ZP+8        ; DELAY COUNTERS FOR LED REVOLUTIONS.
+000B-            I    31       INCR    .EQ     ZP+11       ; POINTERS FOR LED POSITIONS:
+8003-            I    32                                   ;  USED TO FETCH PATTERNS OUT OF TABLES.
+000E-            I    33       LTMSK   .EQ     ZP+14       ; PATTERNS FOR LIT LEDS
+0011-            I    34       VALUES  .EQ     ZP+17       ; NUMBER OF LIT LEDS IN EACH ROW.
+0014-            I    35       RND     .EQ     ZP+20       ; SCRATCHPAD FOR RND # GENERATOR.
+8003-            I    36
+8003-            I    37       ;
+8003-            I    38       ; MAIN PROGRAM
+8003-            I    39       ;
+8003-A9 FF       I    40 (  2)         LDA     #$FF        ; SET UP PORTS.
+8005-8D 03 40    I    41 (  4)         STA     DDR1A
+8008-8D 02 40    I    42 (  4)         STA     DDR1B
+800B-8D 02 4C    I    43 (  4)         STA     DDR3B
+800E-AD 04 40    I    44 (  4)         LDA     T1CL        ; GET SEED FOR RANDOM # GENERATOR.
+8011-85 15       I    45 (  3)         STA     RND+1
+8013-A9 08       I    46 (  2) START   LDA     #8          ; INITIAL SCORE IS EIGHT.
+8015-85 02       I    47 (  3)         STA     SCORE
+8017-A8          I    48 (  2)         TAY                 ; SHOW INITIAL SCORE
+8018-20 40 81    I    49 (  6)         JSR     LIGHT
+801B-20 AB 81    I    50 (  6) KEY     JSR     GETKEY      ; ANY KEY PRESSED STARTS PROGRAM.
+801E-20 2A 80    I    51 (  6)         JSR     DISPLY      ; SPIN WHEELS
+8021-20 AA 80    I    52 (  6)         JSR     EVAL        ; CHECK SCORE AND SHOW IT
+8024-A5 02       I    53 (  3)         LDA     SCORE
+8026-D0 F3       I    54 (2**)         BNE     KEY         ; IF SCORE <> 0, GET NEXT PLAY.
+8028-F0 E9       I    55 (2**)         BEQ     START       ; IF SCORE = 0; RESTART.
+802A-            I    56
+802A-            I    57       ;
+802A-            I    58       ; SUBROUTINE 'DISPLY'
+802A-            I    59       ; SUBROUTINE TO DISPLAY 'SPINNING' LEDS, FIND COMBINATION USED TO
+802A-            I    60       ; DETERMINE SCORE.
+802A-            I    61       ;
+005A-            I    62       LOLIM = 90
+0087-            I    63       HILIM = 135
+0050-            I    64       SPDPRM = 80
+802A-A9 00       I    65 (  2) DISPLY  LDA     #0          ; RESET POINTERS.
+802C-85 0B       I    66 (  3)         STA     INCR
+802E-85 0C       I    67 (  3)         STA     INCR+1
+8030-85 0D       I    68 (  3)         STA     INCR+2
+8032-A0 02       I    69 (  2) LDRND   LDY     #2          ; SET INDEX FOR 3 ITERATIONS.
+8034-20 83 81    I    70 (  6) GETRND  JSR     RANDOM      ; GET RANDOM #.
+8037-C9 87       I    71 (  2)         CMP     #HILIM      ; TOO LARGE?
+8039-B0 F9       I    72 (2**)         BCS     GETRND      ; IF SO, GET ANOTHER.
+803B-C9 5A       I    73 (  2)         CMP     #LOLIM      ; TOO SMALL?
+803D-90 F5       I    74 (2**)         BCC     GETRND      ; IF SO, GET ANOTHER.
+803F-99 08 00    I    75 (  5)         STA     INDX,Y      ; SAVE IN LOOP INDEXES AND
+8042-99 05 00    I    76 (  5)         STA     SPEEDS,Y    ;  LOOP SPEED COUNTERS.
+8045-88          I    77 (  2)         DEY
+8046-10 EC       I    78 (2**)         BPL     GETRND      ; GET NEXT RND #.
+8048-A2 02       I    79 (  2) UPDATE  LDX     #2          ; SET INDEX FOR THREE ITERATIONS.
+804A-B4 05       I    80 (  4) UPDTLP  LDY     SPEEDS,X    ; IS SPEED(X) = 0?
+804C-F0 44       I    81 (2**)         BEQ     NXTUPD      ; IF SO, DO NEXT UPDATE.
+804E-D6 08       I    82 (  6)         DEC     INDX,X      ; DECREMENT LOOP INDEX(X)
+8050-D0 40       I    83 (2**)         BNE     NXTUPD      ; IF LOOPINDEX(X) <> 0, DO NEXT UPDATE.
+8052-B4 0B       I    84 (  4)         LDY     INCR,X      ; INCREMENT POINTER(X).
+8054-C8          I    85 (  2)         INY
+8055-C0 03       I    86 (  2)         CPY     #3          ; POINTER = 3?
+8057-D0 02       I    87 (2**)         BNE     NORST       ; IF NOT SKIP...
+8059-A0 00       I    88 (  2)         LDY     #0          ; ... RESET OF POINTER TO 0.
+805B-94 0B       I    89 (  4) NORST   STY     INCR,X      ; RESTORE POINTER(X).
+805D-86 00       I    90 (  3)         STX     TEMP        ; MULTIPLY X BY 3 FOR ARRAY ACCESS.
+805F-8A          I    91 (  2)         TXA
+8060-0A          I    92 (  2)         ASL     A
+8061-18          I    93 (  2)         CLC
+8062-65 00       I    94 (  3)         ADC     TEMP
+8064-75 0B       I    95 (  4)         ADC     INCR,X      ; ADD COLUMN # TO PTR(X) FOR ROW#.
+8066-A8          I    96 (  2)         TAY                 ; TRANSFER TO Y FOR INDEXING.
+8067-B9 96 81    I    97 ( 4*)         LDA     LTABLE,Y    ; GET PATTERN FOR LED.
+806A-95 0E       I    98 (  4)         STA     LTMSK,X     ; STORE IN LIGHT MASK(X).
+806C-B4 05       I    99 (  4) SPDUPD  LDY     SPEEDS,X    ; INCREMENT SPEED (X).
+806E-C8          I   100 (  2)         INY
+806F-94 05       I   101 (  4)         STY     SPEEDS,X    ; RESTORE.
+8071-94 08       I   102 (  4)         STY     INDX,X      ; RESET LOOP INDEX(X).
+8073-A9 00       I   103 (  2) LEDUPD  LDA     #0          ; UPDATE LIGHTS.
+8075-8D 00 40    I   104 (  4)         STA     PORT1B      ; RESET LED #9
+8078-A5 10       I   105 (  3)         LDA     LTMSK+2     ; COMBINE PATTERN FOR OUTPUT.
+807A-D0 07       I   106 (2**)         BNE     OFFLD9      ; IF MASK#3 <> 0, LED 9 OFF.
+807C-A9 01       I   107 (  2)         LDA     #01         ; TURN ON LED 9.
+807E-8D 00 40    I   108 (  4)         STA     PORT1B
+8081-A9 00       I   109 (  2)         LDA     #0          ; RESET A SO PATTERN WON'T BE BAD.
+8083-05 0E       I   110 (  3) OFFLD9  ORA     LTMSK       ; COMBINE REST OF PATTERNS.
+8085-05 0F       I   111 (  3)         ORA     LTMSK+1
+8087-8D 01 40    I   112 (  4)         STA     PORT1A      ; SET LIGHTS.
+808A-AD 00 4C    I   113 (  4)         LDA     PORT3B      ; TOGGLE SPEAKER.
+808D-49 FF       I   114 (  2)         EOR     #$FF
+808F-8D 00 4C    I   115 (  4)         STA     PORT3B
+8092-CA          I   116 (  2) NXTUPD  DEX                 ; DECREMENT X FOR NEXT UPDATE.
+8093-10 B5       I   117 (2**)         BPL     UPDTLP      ; IF X >= 0, DO NEXT UPDATE.
+8095-A0 50       I   118 (  2)         LDY     #SPDPRM     ; DELAY A BIT TO SLOW
+8097-88          I   119 (  2) WAIT    DEY                 ; FLASHING OF LEDS.
+8098-D0 FD       I   120 (2**)         BNE     WAIT
+809A-A5 05       I   121 (  3)         LDA     SPEEDS      ; CHECK IF ALL COLUMNS OF LEDS STOPPED.
+809C-05 06       I   122 (  3)         ORA     SPEEDS+1
+809E-05 07       I   123 (  3)         ORA     SPEEDS+2
+80A0-D0 A6       I   124 (2**)         BNE     UPDATE      ; IF NOT, DO NEXT SEQUENCE OF UPDATES.
+80A2-A9 FF       I   125 (  2)         LDA     #$FF
+80A4-85 03       I   126 (  3)         STA     DUR         ; DELAY TO SHOW USER PATTERN.
+80A6-20 33 81    I   127 (  6)         JSR     DELAY
+80A9-60          I   128 (  6)         RTS                 ; ALL LEDS STOPPED, DONE.
+80AA-            I   129
+80AA-            I   130       ;
+80AA-            I   131       ; SUBROUTINE 'EVAL'
+80AA-            I   132       ; SUBROUTINE TO EVALUATE PRODUCT OF SPIN, AND DISPLAY SCORE WITH TONES FOR
+80AA-            I   133       ; WIN, LOSE, WIN+ENDGAME AND LOST+ENDGAME.
+80AA-            I   134       ;
+0020-            I   135       HITONE  = $20
+00F0-            I   136       LOTONE  = $F0
+80AA-A9 00       I   137 (  2) EVAL    LDA     #0          ; RESET VARIABLES.
+80AC-85 11       I   138 (  3)         STA     VALUES
+80AE-85 12       I   139 (  3)         STA     VALUES+1
+80B0-85 13       I   140 (  3)         STA     VALUES+2
+80B2-85 01       I   141 (  3)         STA     SCORTP
+80B4-A0 02       I   142 (  2)         LDY     #2          ; SET INDEX Y FOR 3 ITERATIONS TO COUNT # OF
+80B6-            I   143                                   ;  LEDS ON IN EACH ROW.
+80B6-B6 0B       I   144 (  4) CNTLP   LDX     INCR,Y      ; CHECK POINTER(Y), ADDING
+80B8-F6 11       I   145 (  6)         INC     VALUES,X    ;  UP # OF LEDS ON IN EACH ROW.
+80BA-88          I   146 (  2)         DEY
+80BB-10 F9       I   147 (2**)         BPL     CNTLP       ; LOOP IF NOT DONE.
+80BD-A2 02       I   148 (  2)         LDX     #2          ; SET INDEX X FOR 3 ITERATIONS
+80BF-            I   149                                   ; OF LOOP TO FIND SCORE.
+80BF-8A          I   150 (  2) SCORLP  TXA                 ; MULTIPLY INDEX BY FOUR FOR ARRAY ROW ACCESS.
+80C0-0A          I   151 (  2)         ASL     A
+80C1-0A          I   152 (  2)         ASL     A
+80C2-18          I   153 (  2)         CLC                 ; ADD # OF LEDS ON IN ROW(X) TO...
+80C3-75 11       I   154 (  4)         ADC     VALUES,X    ; ... ARRIVE AT COLUMN ADDRESS IN ARRAY.
+80C5-A8          I   155 (  2)         TAY                 ; USE AS INDEX
+80C6-B9 9F 81    I   156 ( 4*)         LDA     SCORTB,Y    ; GET SCORE FOR THIS SPIN.
+80C9-18          I   157 (  2)         CLC
+80CA-65 01       I   158 (  3)         ADC     SCORTP      ; ADD TO ANY PREVIOUS SCORES
+80CC-            I   159                                   ; ACCUMULATED IN THIS LOOP.
+80CC-85 01       I   160 (  3)         STA     SCORTP      ; RESTORE
+80CE-CA          I   161 (  2)         DEX
+80CF-10 EE       I   162 (2**)         BPL     SCORLP      ; LOOP IF NOT DONE
+80D1-A9 60       I   163 (  2)         LDA     #$60        ; SET UP DURATIONS FOR TONES.
+80D3-85 03       I   164 (  3)         STA     DUR
+80D5-A5 01       I   165 (  3)         LDA     SCORTP      ; GET SCORE FOR THIS SPIN.
+80D7-F0 34       I   166 (2**)         BEQ     LOSE        ; IF SCORE IS 0, LOSE A POINT.
+80D9-E6 02       I   167 (  5) WIN     INC     SCORE       ; RAISE OVERALL SCORE BY ONE.
+80DB-A4 02       I   168 (  3)         LDY     SCORE       ; GET SCORE
+80DD-C0 10       I   169 (  2)         CPY     #16         ; WIN WITH 16 POINTS?
+80DF-F0 10       I   170 (2**)         BEQ     WINEND      ; YES; WIN+ENDGAME.
+80E1-20 40 81    I   171 (  6)         JSR     LIGHT       ; SHOW SCORE
+80E4-A9 20       I   172 (  2)         LDA     #HITONE     ; PLAY HIGH BEEP.
+80E6-20 67 81    I   173 (  6)         JSR     TONE
+80E9-20 33 81    I   174 (  6)         JSR     DELAY       ; SHORT DELAY.
+80EC-C6 01       I   175 (  5)         DEC     SCORTP      ; DECREMENT SCORE TO BE ADDED TO...
+80EE-            I   176                                   ;  OVERALL SCORE BY ONE.
+80EE-D0 E9       I   177 (2**)         BNE     WIN         ; LOOP IF SCORE TRANSFER NOT COMPLETE.
+80F0-60          I   178 (  6)         RTS                 ; DONE, RETURN TO MAIN PROGRAM.
+80F1-A9 FF       I   179 (  2) WINEND  LDA     #$FF        ; TURN ALL LEDS ON TO SIGNAL WIN.
+80F3-8D 01 40    I   180 (  4)         STA     PORT1A
+80F6-8D 00 40    I   181 (  4)         STA     PORT1B
+80F9-85 00       I   182 (  3)         STA     TEMP        ; SET FREQ PARAMETER FOR RISING WARBLE.
+80FB-A9 00       I   183 (  2)         LDA     #0
+80FD-85 02       I   184 (  3)         STA     SCORE       ; CLEAR TO FLAG RESTART.
+80FF-A9 04       I   185 (  2)         LDA     #4
+8101-85 03       I   186 (  3)         STA     DUR         ; SHORT DURATION FOR INDIVIDUAL BEEPS IN WARBLE.
+8103-A5 00       I   187 (  3) RISE    LDA     TEMP        ; GET FREQUENCY...
+8105-20 67 81    I   188 (  6)         JSR     TONE        ; ... FOR BEEP.
+8108-C6 00       I   189 (  5)         DEC     TEMP        ; NEXT BEEP WILL BE HIGHER.
+810A-D0 F7       I   190 (2**)         BNE     RISE        ; DO NEXT BEEP IF NOT DONE.
+810C-60          I   191 (  6)         RTS                 ; RETURN FOR RESTART.
+810D-C6 02       I   192 (  5) LOSE    DEC     SCORE       ; IF SPIN BAD, SCORE=SCORE-1
+810F-A4 02       I   193 (  3)         LDY     SCORE       ; SHOW SCORE
+8111-20 40 81    I   194 (  6)         JSR     LIGHT
+8114-A9 F0       I   195 (  2)         LDA     #LOTONE     ; PLAY LOW LOSE TONE.
+8116-20 67 81    I   196 (  6)         JSR     TONE
+8119-A4 02       I   197 (  3)         LDY     SCORE       ; GET SCORE TO SEE...
+811B-F0 01       I   198 (2**)         BEQ     LOSEND      ; ... IF GAME IS OVER.
+811D-60          I   199 (  6)         RTS                 ; IF NOT, RETURN FOR NEXT SPIN.
+811E-A9 00       I   200 (  2) LOSEND  LDA     #0          ; SET TEMP FOR USE AS FREQUENCY PARAMETER
+8120-85 00       I   201 (  3)         STA     TEMP        ;  IN FALLING WARBLE.
+8122-8D 01 40    I   202 (  4)         STA     PORT1A      ; CLEAR LED #1.
+8125-A9 04       I   203 (  2)         LDA     #4
+8127-85 03       I   204 (  3)         STA     DUR
+8129-A5 00       I   205 (  3) FALL    LDA     TEMP
+812B-20 67 81    I   206 (  6)         JSR     TONE        ; PLAY BEEP.
+812E-E6 00       I   207 (  5)         INC     TEMP        ; NEXT TONE WILL BE LOWER.
+8130-D0 F7       I   208 (2**)         BNE     FALL
+8132-60          I   209 (  6)         RTS                 ; RETURN FOR RESTART.
+8133-            I   210
+8133-            I   211       ;
+8133-            I   212       ; SUBROUTINE 'DELAY'
+8133-            I   213       ; VARIABLE LENGHT DELAY SUBROUTINE
+8133-            I   214       ; DELAY LENGTH = (2046*[DUR]+10) US.
+8133-            I   215       ;
+8133-A4 03       I   216 (  3) DELAY   LDY     DUR         ; GET DELAY LENGHT.
+8135-A2 FF       I   217 (  2) DL1     LDX     #$FF        ; SET COUNTER FOR INNER 2040 US. LOOP TO
+8137-D0 00       I   218 (2**) DL2     BNE     DL3         ;  WASTE TIME.
+8139-CA          I   219 (  2) DL3     DEX                 ; DECREMENT INNER LOOP COUNTER.
+813A-D0 FB       I   220 (2**)         BNE     DL2         ; LOOP UNTIL INNER LOOP DONE.
+813C-88          I   221 (  2)         DEY                 ; DECREMENT OUTER LOOP COUNTER.
+813D-D0 F6       I   222 (2**)         BNE     DL1         ; LOOP UNTIL DONE.
+813F-60          I   223 (  6)         RTS                 ; RETURN.
+8140-            I   224
+8140-            I   225       ;
+8140-            I   226       ; SUBROUTINE 'LIGHT'
+8140-            I   227       ; SUBROUTINE TO LIGHT LEDS CORRESPONDING TO THE CONTENTS OF REGISTER Y ON
+8140-            I   228       ; ENTERING.
+8140-            I   229       ;
+8140-A9 00       I   230 (  2) LIGHT   LDA     #0          ; CLEAR ACCUMULATOR FOR BIT SHIFT.
+8142-85 00       I   231 (  3)         STA     TEMP        ; CLEAR OVERFLOW FLAG
+8144-8D 01 40    I   232 (  4)         STA     PORT1A      ; CLEAR LOW LEDS
+8147-8D 00 40    I   233 (  4)         STA     PORT1B      ; CLEAR HIGH LEDS.
+814A-C0 0F       I   234 (  2)         CPY     #15         ; CODE FOR UNCONNECTED BIT?
+814C-F0 01       I   235 (2**)         BEQ     LIGHT0      ; IF SO, NO CHANGE.
+814E-88          I   236 (  2)         DEY                 ; DECREMENT TO MATCH.
+814F-38          I   237 (  2) LIGHT0  SEC                 ; SET BIT TO BE SHIFTED HIGH.
+8150-2A          I   238 (  2) LTSHFT  ROL     A           ; SHIFT BIT LEFT.
+8151-90 05       I   239 (2**)         BCC     LTCC        ; IF CARRY SET, OVERFLOW HAS OCCURRED
+8153-            I   240                                   ; INTO HIGH BYTE.
+8153-A2 FF       I   241 (  2)         LDX     #$FF        ; SET OVERFLOW FLAG.
+8155-86 00       I   242 (  3)         STX     TEMP
+8157-2A          I   243 (  2)         ROL                 ; MOVE BIT OUT OF CARRY.
+8158-88          I   244 (  2) LTCC    DEY                 ; ONE LESS BIT TO BE SHIFTED.
+8159-10 F5       I   245 (2**)         BPL     LTSHFT      ; SHIFT AGAIN IF NOT DONE.
+815B-A6 00       I   246 (  3)         LDX     TEMP        ; GET OVERFLOW FLAG.
+815D-D0 04       I   247 (2**)         BNE     HIBYTE      ; IF FLAG <> 0, OVERFLOW: A CONTAINS HIGH BYTE.
+815F-8D 01 40    I   248 (  4) LOBYTE  STA     PORT1A      ; STORE A IN LOW ORDER LEDS.
+8162-60          I   249 (  6)         RTS                 ; RETURN.
+8163-8D 00 40    I   250 (  4) HIBYTE  STA     PORT1B      ; STORE A IN HIGH ORDER LEDS.
+8166-60          I   251 (  6)         RTS                 ; RETURN.
+8167-            I   252
+8167-            I   253       ;
+8167-            I   254       ; SUBROUTINE 'TONE'
+8167-            I   255       ; TONE GENERATION SUBROUTINE.
+8167-            I   256       ;
+8167-85 04       I   257 (  3) TONE    STA     FREQ
+8169-A9 FF       I   258 (  2)         LDA     #$FF
+816B-8D 00 4C    I   259 (  4)         STA     PORT3B
+816E-A9 00       I   260 (  2)         LDA     #0
+8170-A6 03       I   261 (  3)         LDX     DUR
+8172-A4 04       I   262 (  3) FL2     LDY     FREQ
+8174-88          I   263 (  2) FL1     DEY
+8175-18          I   264 (  2)         CLC
+8176-90 00       I   265 (2**)         BCC     FL0
+8178-D0 FA       I   266 (2**) FL0     BNE     FL1
+817A-49 FF       I   267 (  2)         EOR     #$FF
+817C-8D 00 4C    I   268 (  4)         STA     PORT3B
+817F-CA          I   269 (  2)         DEX
+8180-D0 F0       I   270 (2**)         BNE     FL2
+8182-60          I   271 (  6)         RTS
+8183-            I   272
+8183-            I   273       ;
+8183-            I   274       ; SUBROUTINE 'RANDOM'
+8183-            I   275       ; RANDOM NUMBER GENERATOR SUBROUTINE.
+8183-            I   276       ;
+8183-38          I   277 (  2) RANDOM  SEC
+8184-A5 15       I   278 (  3)         LDA     RND+1
+8186-65 18       I   279 (  3)         ADC     RND+4
+8188-65 19       I   280 (  3)         ADC     RND+5
+818A-85 14       I   281 (  3)         STA     RND
+818C-A2 04       I   282 (  2)         LDX     #4
+818E-B5 14       I   283 (  4) RNDSH   LDA     RND,X
+8190-95 15       I   284 (  4)         STA     RND+1,X
+8192-CA          I   285 (  2)         DEX
+8193-10 F9       I   286 (2**)         BPL     RNDSH
+8195-60          I   287 (  6)         RTS
+8196-            I   288
+8196-            I   289       ;
+8196-            I   290       ; ARRAYS
+8196-            I   291       ;
+8196-            I   292
+8196-            I   293       ;
+8196-            I   294       ; ARRAY OF PATTERNS TO LIGHT LEDS, ARRAY ROWS CORRESPOND TO COLUMNS OF LED
+8196-            I   295       ; ARRAY, AND COLUMNS TO ROWS, FOR EXAMPLE, THIRD BYTE IN ROW ONE WILL LIGHT
+8196-            I   296       ; LED 7.
+8196-            I   297       ;
+8196-01 08 40 02 
+     10 80 04 20 
+     00          I   298       LTABLE  .HS     01.08.40.02.10.80.04.20.00
+819F-            I   299
+819F-            I   300       ;
+819F-            I   301       ; ARRAY OF SCORES RECEIVED FOR CERTAIN PATTERS OF LIT LEDS; ROWS CORRESPOND TO
+819F-            I   302       ; ROWS IN LED ARRAY. COLUMNS CORRESPOND TO NUMBER OF LEDS LIT IN THAT ROW.
+819F-            I   303       ; I.E. 3 LEDS IN MIDDLE ROW IS 3 PTS.
+819F-            I   304       ;
+819F-00 00 00 00 
+     00 00 01 03 
+     00 00 00 00 I   305       SCORTB  .HS     00.00.00.00.00.00.01.03.00.00.00.00
+81AB-                 17               .IN     ../../common/CH01-Getkey/getkey_routine.asm
+81AB-            I     1       ; 'GETKEY' KEYBOARD INPUT ROUTINE READS AND DEBOUNCES KEYBOARD. RETURNS WITH
+81AB-            I     2       ; KEY NUMBER IN ACCUMULATOR IF KEY DOWN. OPERATION: SENDS NUMBERS 0-F TO 74154
+81AB-            I     3       ; (4 TO 16 LINE DECODER), WHICH GROUNDS ONE SIDE OF KEYSWITCHES ONE AT A TIME.
+81AB-            I     4       ; IF A KEY IS DOWN, PA7 OF VIA #3 WILL BE GROUNDED, AND THE CURRENT VALUE
+81AB-            I     5       ; APPLIED TO THE 74154 BE THE KEY NUMBER. WHEN THE PROGRAM DETECTS A KEY CLOSE
+81AB-            I     6       ; CHECKS FOR KEY CLOSURE FOR 50 MS. TO ELIMINATE BOUNCE.
+81AB-            I     7       ; NOTE: IF NO KEY IS PRESSED, GETKEY WILL WAIT.
+81AB-            I     8       ;
+81AB-2C 01 4C    I     9 (  4) GETKEY  BIT     PORT3A      ; SEE IF KEY IS STILL DOWN FROM LAST KEY CLOSURE:
+81AE-            I    10                                   ;  KEYSTROBE IN 'N' STATUS BIT.
+81AE-10 FB       I    11 (2**)         BPL     GETKEY      ; IF YES, WAIT FOR KEY RELEASE
+81B0-A2 0F       I    12 (  2) RSTART  LDX     #15         ; SET KEY COUNTER TO 15
+81B2-8E 00 4C    I    13 (  4) NXTKEY  STX     PORT3B      ; OUTPUT KEY # TO 74154
+81B5-2C 01 4C    I    14 (  4)         BIT     PORT3A      ; SEE IF KEY DOWN: STROBE IN 'N'
+81B8-10 05       I    15 (2**)         BPL     BOUNCE      ;  IF YES, GO DEBOUNCE
+81BA-CA          I    16 (  2)         DEX                 ;   DECREMENT KEY #
+81BB-10 F5       I    17 (2**)         BPL     NXTKEY      ;  NO, DO NEXT KEY
+81BD-30 F1       I    18 (2**)         BMI     RSTART      ; START OVER
+81BF-8A          I    19 (  2) BOUNCE  TXA                 ; SAVE KEY NUMBER IN A
+81C0-A0 12       I    20 (  2)         LDY     #$12        ; OUTER LOOP CNT LOAD FOR DELAY OF 50 MS.
+81C2-A2 FF       I    21 (  2) LP1     LDX     #$FF        ; INNER 11 US. LOOP
+81C4-2C 01 4C    I    22 (  4) LP2     BIT     PORT3A      ; SEE IF KEY STILL DOWN
+81C7-30 E7       I    23 (2**)         BMI     RSTART      ; IF NOT, KEY NOT VALID, RESTART
+81C9-CA          I    24 (  2)         DEX
+81CA-D0 F8       I    25 (2**)         BNE     LP2         ; THIS LOOP USES 2115*5 US.
+81CC-88          I    26 (  2)         DEY
+81CD-D0 F3       I    27 (2**)         BNE     LP1         ; OUTER LOOP: TOTAL IS 50 MS.
+81CF-60          I    28 (  6)         RTS                 ; DONE: KEY IN A.
+81D0-            I    29       ;
+81D0-            I    30       ; SUBROUTINE 'INITKEY'
+81D0-            I    31       ; TAKES CARE OF INITIALIZING VIA #3 FOR USING WITH THE GETKEY ROUTINE FROM
+81D0-            I    32       ; THE CODE.
+81D0-            I    33       ;
+81D0-A9 00       I    34 (  2) INITKEY LDA     #0
+81D2-8D 03 4C    I    35 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+81D5-A9 FF       I    36 (  2)         LDA     #$FF
+81D7-8D 02 4C    I    37 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
+81DA-60          I    38 (  6)         RTS
+81DB-                 18       ;
+81DB-                 19       ; STORE CPU INITIALIZATION VECTORS AT THE END OF THE EEPROM.
+81DB-                 20       ;
+FFFA                 21               .NO     $FFFA,$FF
+FFFA-00 80            22               .DA     BE6502      ; NMI VECTOR
+FFFC-00 80            23               .DA     BE6502      ; RESET VECTOR
+FFFE-00 80            24               .DA     BE6502      ; IRQ VECTOR

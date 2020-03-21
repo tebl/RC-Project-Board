@@ -1,0 +1,300 @@
+0000-                  4       ;
+0000-                  5       ; PATTERN/TONE RECALL AND ESP TEST PROGRAM. FOR THE '6502 GAMES' HARDWARE,
+0000-                  6       ; BOARD SHOULD BE JUMPERED WITH VIA CHIPS AT THE ADDRESSES SPECIFIED BELOW.
+0000-                  7       ; OTHER THAN THAT THE CODE IS SHOULD BE UNCHANGED FROM THE BOOK THOUGH THERE
+0000-                  8       ; WILL BE SOME DIFFERENCES DUE TO ASSEMBLER USED.
+0000-                  9       ;
+C000-                 10       VIA1    .EQ     $C000
+CC00-                 11       VIA3    .EQ     $CC00
+0000-                 12
+0200-                 13               .OR     $0200
+0200-                 14               .TA     $0200
+0200-20 53 03         15 (  6) BEGIN   JSR     INITKEY
+0203-                 16               .IN     game.asm
+0203-            I     1       ;   'MINDBENDER'
+0203-            I     2       ; PLAYS MINDBENDER GAME: USER SPECIFIES LENGTH OF NUMBER TO BE GUESSED, THEN
+0203-            I     3       ; GUESSES DIGITS, AND COMPUTER TELLS PLAYER HOW MANY OF THE DIGITS GUESSED
+0203-            I     4       ; WERE RIGHT, AND HOW MANY OF THOSE CORRECT DIGITS WERE IN THE CORRECT PLACE,
+0203-            I     5       ; UNTIL THE PLAYER CAN GUESS THE NUMBER ON THE BOARD. BLINKING LEDS INDICATE
+0203-            I     6       ; CORRECT VALUE & CORRECT DIGIT, AND NON-BLINKING LEDS SHOW CORRECT DIGIT
+0203-            I     7       ; VALUE, BUT WRONG PLACE.
+0203-            I     8       ;
+0203-            I     9       ; THE BOTTOM ROW OF LEDS IS USED TO SHOW THE MODE OF THE PROGRAM: IF THE
+0203-            I    10       ; LEFTMOST LEDS ARE LIT, THE PROGRAM EXPECTS A GUESS. THE PROGRAM REJECTS
+0203-            I    11       ; UNSUITABLE VALUES FOR A NUMBER LENGTH, WHICH CAN ONLY BE 1-9, A VALUE OTHER
+0203-            I    12       ; THAN 0-9 FOR A GUESS RESTARTS THE GAME.
+0203-            I    13       ;
+0203-            I    14       ; A LOW TONE DENOTES A BAD GUESS, A HIGH TONE, A WIN. AFTER A WIN, THE PROGRAM
+0203-            I    15       ; RESTARTS. AN INTERRUPT ROUTINE IS USED TO BLINK THE LEDS.
+0203-            I    16       ;
+C000-            I    17       PORT1B  .EQ     VIA1        ; PORT B
+C001-            I    18       PORT1A  .EQ     VIA1+1      ; PORT A
+C002-            I    19       DDR1B   .EQ     VIA1+2      ; PORT B DATA DIRECTION REGISTER
+C003-            I    20       DDR1A   .EQ     VIA1+3      ; PORT A DATA DIRECTION REGISTER
+C004-            I    21       T1LL    .EQ     VIA1+4      ; TIMER 1 LATCH LOW
+C005-            I    22       T1CH    .EQ     VIA1+5      ; TIMER 1 COUNTER HIGH
+C00E-            I    23       IER     .EQ     VIA1+14     ; INTERRUPT ENABLE REGISTER
+C00B-            I    24       ACR     .EQ     VIA1+11     ; AUXILLIARY CONTROL REGISTER
+0203-            I    25
+CC00-            I    26       PORT3B  .EQ     VIA3        ; PORT B
+CC01-            I    27       PORT3A  .EQ     VIA3+1      ; PORT A
+CC02-            I    28       DDR3B   .EQ     VIA3+2      ; PORT B DATA DIRECTION REGISTER
+CC03-            I    29       DDR3A   .EQ     VIA3+3      ; PORT A DATA DIRECTION REGISTER
+0203-            I    30
+0203-            I    31       ;
+0203-            I    32       ; VARIABLE STORAGE.
+0203-            I    33       ;
+0000-            I    34       ZP      .EQ     $00
+0000-            I    35       DIGITS  .EQ     ZP          ; NUMBER OF DIGITS TO BE GUESSED
+0001-            I    36       DUR     .EQ     ZP+1        ; TONE DURATION CONSTANT
+0002-            I    37       XTEMP   .EQ     ZP+2        ; TEMP STORAGE FOR X REGISTER
+0003-            I    38       YTEMP   .EQ     ZP+3        ; TEMP STORAGE FOR Y REGISTER
+0004-            I    39       CNT     .EQ     ZP+4        ; KEEPS TRACK OF # OF MATCHES
+0005-            I    40       MASKA   .EQ     ZP+5        ; CONTAINS PATTERN EOR-ED WITH LED
+0203-            I    41                                   ;  STATUS REGISTER A TO CAUSE BLINK
+0006-            I    42       MASKB   .EQ     ZP+6        ; LED PORT B BLINK MASK
+0007-            I    43       FREQ    .EQ     ZP+7        ; TEMPORARY STORAGE FOR TONE FREQUENCY
+0008-            I    44       CNT1    .EQ     ZP+8        ; # OF CORRECT DIGITS IN RIGHT PLACE
+0009-            I    45       RND     .EQ     ZP+9        ; FIRST OF RANDOM # LOCATIONS
+000F-            I    46       DIG0    .EQ     ZP+15       ; FIRST OF 9 DIGIT LOCATIONS
+0012-            I    47       ENTRY0  .EQ     ZP+18       ; FIRST OF 9 GUESS LOCATIONS
+A67E-            I    48       IRQVECL .EQ     $A67E       ; INTERRUPT VECTOR LOW ORDER BYTE
+A67F-            I    49       IRQVECH .EQ     $A67F       ;  AND HIGH ORDER
+0203-            I    50
+0203-            I    51       ;
+0203-            I    52       ; ROUTINE TO SET UP VARIABLES AND INTERRUPT TIMER FOR LED FLASHING.
+0203-            I    53       ;
+0203-A9 EA       I    54 (  2) START   LDA     #$EA        ; LOAD LOW INTERRUPT VECTOR
+0205-8D 7E A6    I    55 (  4)         STA     IRQVECL     ; ... AND SET AT VECTOR LOCATION.
+0208-A9 03       I    56 (  2)         LDA     #$03        ; LOAD INTERRUPT VECTOR ...
+020A-8D 7F A6    I    57 (  4)         STA     IRQVECH     ; ... AND STORE.
+020D-A9 7F       I    58 (  2)         LDA     #$7F        ; CLEAR INTERRUPT ENABLE REGISTER
+020F-8D 0E C0    I    59 (  4)         STA     IER
+0212-A9 C0       I    60 (  2)         LDA     #$C0        ; ENABLE TIMER 1 INTERRUPT
+0214-8D 0E C0    I    61 (  4)         STA     IER
+0217-A9 40       I    62 (  2)         LDA     #$40        ; ENABLE TIMER 1 IN FREE-RUN MODE
+0219-8D 0B C0    I    63 (  4)         STA     ACR
+021C-A9 FF       I    64 (  2)         LDA     #$FF
+021E-8D 04 C0    I    65 (  4)         STA     T1LL        ; SET LOW LATCH ON TIMER 1
+0221-8D 05 C0    I    66 (  4)         STA     T1CH        ; SET LATCH HIGH & START COUNT
+0224-58          I    67 (  2)         CLI                 ; ENABLE INTERRUPTS
+0225-8D 03 C0    I    68 (  4)         STA     DDR1A       ; SET VIA 1 PORT A FOR OUTPUT
+0228-8D 02 C0    I    69 (  4)         STA     DDR1B       ; SET VIA 1 PORT B FOR OUTPUT
+022B-8D 02 CC    I    70 (  4)         STA     DDR3B       ; SET VIA 3 PORT B FOR OUTPUT
+022E-A9 00       I    71 (  2) KEY1    LDA     #0          ; CLEAR LEDS
+0230-8D 01 C0    I    72 (  4)         STA     PORT1A
+0233-8D 00 C0    I    73 (  4)         STA     PORT1B
+0236-85 05       I    74 (  2)         STA     MASKA       ; CLEAR BLINK MASKS
+0238-85 06       I    75 (  2)         STA     MASKB
+023A-            I    76       ;
+023A-            I    77       ; ROUTINE TO GET NUMBER OF DIGITS TO GUESS, THEN FILL THE DIGITS WITH RANDOM
+023A-            I    78       ; NUMBERS FROM 0-9.
+023A-            I    79       ;
+023A-A9 02       I    80 (  2)         LDA     #%00000010  ; LIGHT LED TO SIGNAL USER TO
+023C-8D 00 C0    I    81 (  4)         STA     PORT1B      ;  INPUT # OF DIGITS NEEDED.
+023F-20 2E 03    I    82 (  6)         JSR     GETKEY      ; GET # OF DIGITS
+0242-C9 0A       I    83 (  2)         CMP     #10         ; IF KEY# > 9, RESTART GAME
+0244-10 E8       I    84 (2**)         BPL     KEY1
+0246-C9 00       I    85 (  2)         CMP     #0          ; CHECK FOR 0 DIGITS TO GUESS
+0248-F0 E4       I    86 (2**)         BEQ     KEY1        ; ... 0 DIGITS NOT ALLOWED.
+024A-85 00       I    87 (  2)         STA     DIGITS      ; STORE VALID # OF DIGITS
+024C-AD 04 C0    I    88 (  4)         LDA     T1LL        ; GET RANDOM #,
+024F-85 0A       I    89 (  2)         STA     RND+1       ;  USE IT TO START RANDOM
+0251-85 0D       I    90 (  2)         STA     RND+4       ;  NUMBER GENERATOR.
+0253-85 0E       I    91 (  2)         STA     RND+5
+0255-A4 00       I    92 (  3)         LDY     DIGITS      ; GET # OF DIGITS TO BE GUESSED
+0257-88          I    93 (  2)         DEY                 ; ... AND COUNT DOWN TO 0, FILLING THEM WITH VALUES
+0258-20 FF 02    I    94 (  6) RAND    JSR     RANDOM      ; GET RANDOM VALUE FOR DIGIT
+025B-F8          I    95 (  2)         SED
+025C-69 00       I    96 (  2)         ADC     #00         ; DECIMAL ADJUST
+025E-D8          I    97 (  2)         CLD
+025F-29 0F       I    98 (  2)         AND     #%00001111  ; KEEP DIGIT < 10
+0261-99 0F 00    I    99 (  5)         STA     DIG0,Y      ; SAVE IT IN DIGIT TABLE.
+0264-88          I   100 (  2)         DEY
+0265-10 F1       I   101 (2**)         BPL     RAND        ; FILL NEXT DIGIT
+0267-            I   102       ;
+0267-            I   103       ; ROUTINE TO FILL GUESS TABLE WITH USERS GUESSES
+0267-            I   104       ;
+0267-A9 00       I   105 (  2) ENTER   LDA     #0          ; CLEAR ENTRY TABLE POINTER
+0269-85 02       I   106 (  2)         STA     XTEMP
+026B-A9 06       I   107 (  2)         LDA     #%00000110  ; LET USER KNOW THAT GUESSES
+026D-0D 00 C0    I   108 (  4)         ORA     PORT1B      ;  SHOULD BE INPUT ...
+0270-8D 00 C0    I   109 (  4)         STA     PORT1B      ; ... WITHOUT CHANGING ARRAY
+0273-20 2E 03    I   110 (  6) KEY2    JSR     GETKEY      ; GET GUESS
+0276-C9 0A       I   111 (  2)         CMP     #10         ; IS IT GREATER THAN 9?
+0278-10 B4       I   112 (2**)         BPL     KEY1        ; IF YES, RESTART GAME.
+027A-A6 02       I   113 (  3)         LDX     XTEMP       ; GET POINTER FOR INDEXING
+027C-95 12       I   114 (  4)         STA     ENTRY0,X    ; STORE GUESS IN TABLE
+027E-E8          I   115 (  2)         INX                 ; INCREMENT POINTER
+027F-86 02       I   116 (  3)         STX     XTEMP
+0281-E4 00       I   117 (  3)         CPX     DIGITS      ; CORRECT # OF GUESSES FETCHED?
+0283-D0 EE       I   118 (2**)         BNE     KEY2        ; IF NOT, GET ANOTHER
+0285-            I   119       ;
+0285-            I   120       ; THIS ROUTINE COMPARES USERS GUESSES WITH DIGITS OF NUMBER TO GUESS. FOR
+0285-            I   121       ; EACH CORRECT DIGIT IN THE CORRECT PLACE, A BLINKING LED IS LIT, AND FOR
+0285-            I   122       ; EACH CORRECT DIGIT IN THE WRONG PLACE, A NON-BLINKING LED IS LIT.
+0285-            I   123       ;
+0285-A2 00       I   124 (  2)         LDX     #0          ; CLEAR FOLLOWING STORAGES:
+0287-8E 01 C0    I   125 (  4)         STX     PORT1A      ;  LEDS
+028A-8E 00 C0    I   126 (  4)         STX     PORT1B
+028D-86 05       I   127 (  3)         STX     MASKA       ;  BLINK MASKS
+028F-86 06       I   128 (  3)         STX     MASKB
+0291-86 04       I   129 (  3)         STX     CNT         ; COUNT OF MATCHES
+0293-86 08       I   130 (  3)         STX     CNT1        ; COUNT OF RIGHT DIGITS
+0295-B5 0F       I   131 (  4) DIGLP   LDA     DIG0,X      ; LOAD 1ST DIGIT OF # FOR COMPARISON
+0297-D5 12       I   132 (  4)         CMP     ENTRY0,X    ; RIGHT GUESS, RIGHT PLACE?
+0299-D0 04       I   133 (2**)         BNE     ENTCMP      ; NO, IS RIGHT GUESS IN WRONG PLACE?
+029B-E6 08       I   134 (  5)         INC     CNT1        ; ONE MORE RIGHT GUESS/RIGHT PLACE
+029D-D0 10       I   135 (2**)         BNE     NEXTDIG     ; EXAMINE NEXT DIGIT OF NUMBER
+029F-A0 00       I   136 (  2) ENTCMP  LDY     #0          ; RESET GUESS # PTR FOR COMPARES
+02A1-D9 12 00    I   137 ( 4*) ENTRYLP CMP     ENTRY0,Y    ; RIGHT DIGIT, WRONG PLACE?
+02A4-D0 04       I   138 (2**)         BNE     NEXTENT     ; NO, SEE IF NEXT DIGIT IS.
+02A6-E6 04       I   139 (  5)         INC     CNT         ; ONE MORE RIGHT DIGIT/WRONG PLACE
+02A8-D0 05       I   140 (2**)         BNE     NEXTDIG     ; EXAMINE NEXT DIGIT OF NUMBER
+02AA-C8          I   141 (  2) NEXTENT INY                 ; INCREMENT GUESS # POINTER
+02AB-C4 00       I   142 (  3)         CPY     DIGITS      ; ALL GUESSES TESTED?
+02AD-D0 F2       I   143 (2**)         BNE     ENTRYLP     ; NO, TRY NEXT GUESS.
+02AF-E8          I   144 (  2) NEXTDIG INX                 ; INCREMENT DIGIT # POINTER
+02B0-E4 00       I   145 (  3)         CPX     DIGITS      ; ALL DIGITS EVALUATED?
+02B2-D0 E1       I   146 (2**)         BNE     DIGLP       ; NO, CHECK NEXT DIGIT.
+02B4-18          I   147 (  2)         CLC                 ; GET READY FOR ADD...
+02B5-A5 04       I   148 (  3)         LDA     CNT         ;  OF TOTAL MATCHES TO DETERMINE
+02B7-65 08       I   149 (  3)         ADC     CNT1        ;  NUMBER OF LEDS TO LIGHT.
+02B9-A8          I   150 (  2)         TAY                 ; TRANSFER A TO Y FOR 'LIGHT' ROUTINE
+02BA-20 F1 02    I   151 (  6)         JSR     LITE        ; GET PATTERN TO LIGHT LEDS
+02BD-8D 01 C0    I   152 (  4)         STA     PORT1A      ; TURN LEDS ON
+02C0-90 05       I   153 (2**)         BCC     CC          ; IF CARRY=0, DON'T LIGHT PB0
+02C2-A9 01       I   154 (  2)         LDA     #1
+02C4-8D 00 C0    I   155 (  4)         STA     PORT1B      ; TURN PB0 ON.
+02C7-A4 08       I   156 (  3) CC      LDY     CNT1        ; LOAD # OF LEDS TO BLINK
+02C9-20 F1 02    I   157 (  6)         JSR     LITE        ; GET PATTERN
+02CC-85 05       I   158 (  2)         STA     MASKA       ; START TO BLINK LEDS
+02CE-90 04       I   159 (2**)         BCC     TEST        ; IF CARRY=0, PB0 WON'T BLINK
+02D0-A9 01       I   160 (  2)         LDA     #1
+02D2-85 06       I   161 (  2)         STA     MASKB
+02D4-            I   162       ;
+02D4-            I   163       ; ROUTINE TO TEST FOR WIN BY CHECKING IF # OF CORRECT DIGITS IN CORRECT
+02D4-            I   164       ; PLACES = NUMBER OF DIGITS. IF WIN, A HIGH PITCHED SOUND IS GENERATED, AND
+02D4-            I   165       ; IF ANY DIGIT IS WRONG, A LOW SOUND IS GENERATED INSTEAD.
+02D4-            I   166       ;
+02D4-A6 08       I   167 (  3) TEST    LDX     CNT1        ; LOAD NUMBER OF CORRECT DIGITS
+02D6-E4 00       I   168 (  3)         CPX     DIGITS      ; ALL GUESSES CORRECT?
+02D8-F0 0B       I   169 (2**)         BEQ     WIN         ; IF YES, PLAYER WINS
+02DA-A9 72       I   170 (  2) BAD     LDA     #$72
+02DC-85 01       I   171 (  2)         STA     DUR         ; SET UP LENGTH OF LOW TONE
+02DE-A9 BE       I   172 (  2)         LDA     #$BE        ; TONE VALUE FOR LOW TONE
+02E0-20 12 03    I   173 (  6)         JSR     TONE        ; SIGNAL BAD GUESSES WITH TONE
+02E3-F0 82       I   174 (2**)         BEQ     ENTER       ; GET NEXT GUESSES
+02E5-A9 FF       I   175 (  2) WIN     LDA     #$FF        ; DURATION FOR HIGH TONE
+02E7-85 01       I   176 (  2)         STA     DUR
+02E9-A9 54       I   177 (  2)         LDA     #$54        ; TONE VALUE FOR HIGH TONE
+02EB-20 12 03    I   178 (  6)         JSR     TONE        ; SIGNAL WIN
+02EE-4C 2E 02    I   179 (  3)         JMP     KEY1        ; RESTART GAME
+02F1-            I   180       ;
+02F1-            I   181       ; ROUTINE TO FILL ACCUMULATOR WITH ONES, STARTING AT THE LOW ORDER END, UP
+02F1-            I   182       ; TO AND INCLUDING THE BIT POSITION CORRESPONDING TO THE # OF LEDS TO BE LIT
+02F1-            I   183       ; OR SET TO BLINKING.
+02F1-            I   184       ;
+02F1-D0 04       I   185 (2**) LITE    BNE     STRTSH      ; IF Y NOT ZERO, SHIFT ONES IN
+02F3-A9 00       I   186 (  2)         LDA     #0          ; SPECIAL CASE: RESULT IS NO ONES.
+02F5-18          I   187 (  2)         CLC
+02F6-60          I   188 (  6)         RTS
+02F7-A9 00       I   189 (  2) STRTSH  LDA     #0          ; CLEAR A SO PATTERN WILL SHOW
+02F9-38          I   190 (  2) SHIFT   SEC                 ; MAKE A BIT HIGH
+02FA-2A          I   191 (  2)         ROL     A           ; SHIFT IT TO CORRECT POSITION
+02FB-88          I   192 (  2)         DEY                 ; BY LOOPING TO # OF GUESS/DIGIT
+02FC-            I   193                                   ;  MATCHES, AS PASSED IN Y
+02FC-D0 FB       I   194 (2**)         BNE     SHIFT       ; LOOP UNTIL DONE
+02FE-60          I   195 (  6)         RTS
+02FF-            I   196       ;
+02FF-            I   197       ; RANDOM NUMBER GENERATOR
+02FF-            I   198       ; USES NUMBERS A,B,C,D,E,F STORED AS RND THROUGH RND+5: ADDS B+E+F+1 AND
+02FF-            I   199       ; PLACES RESULT IN A, THEN SHIFTS A TO B, B TO C, ETC. THE NEW RANDOM NUMBER
+02FF-            I   200       ; WHICH IS BETWEEN 0 AND 255 INCLUSIVE IS IN THE ACCUMULATOR ON EXIT.
+02FF-            I   201       ;
+02FF-38          I   202 (  2) RANDOM  SEC                 ; CARRY ADDS VALUE 1
+0300-A5 0A       I   203 (  3)         LDA     RND+1       ; ADD A,B,E AND CARRY
+0302-65 0D       I   204 (  3)         ADC     RND+4
+0304-65 0E       I   205 (  3)         ADC     RND+5
+0306-85 09       I   206 (  2)         STA     RND
+0308-A2 04       I   207 (  2)         LDX     #4          ; SHIFT NUMBERS OVER
+030A-B5 09       I   208 (  4) RPL     LDA     RND,X
+030C-95 0A       I   209 (  4)         STA     RND+1,X
+030E-CA          I   210 (  2)         DEX
+030F-10 F9       I   211 (2**)         BPL     RPL
+0311-60          I   212 (  6)         RTS
+0312-            I   213       ;
+0312-            I   214       ; TONE GENERATOR ROUTINE
+0312-            I   215       ; DURATION OF TONE (NUMBER OF CYCLES TO CREATE) SHOULD BE IN 'DUR' ON ENTRY,
+0312-            I   216       ; AND THE NOTE VALUE (FREQUENCY) IN THE ACCUMULATOR.
+0312-            I   217       ;
+0312-85 07       I   218 (  2) TONE    STA     FREQ
+0314-A9 FF       I   219 (  2)         LDA     #$FF
+0316-8D 00 CC    I   220 (  4)         STA     PORT3B
+0319-A9 00       I   221 (  2)         LDA     #$00
+031B-A6 01       I   222 (  3)         LDX     DUR
+031D-A4 07       I   223 (  3) FL2     LDY     FREQ
+031F-88          I   224 (  2) FL1     DEY
+0320-18          I   225 (  2)         CLC
+0321-90 00       I   226 (2**)         BCC     FL0
+0323-D0 FA       I   227 (2**) FL0     BNE     FL1
+0325-49 FF       I   228 (  2)         EOR     #$FF
+0327-8D 00 CC    I   229 (  4)         STA     PORT3B
+032A-CA          I   230 (  2)         DEX
+032B-D0 F0       I   231 (2**)         BNE     FL2
+032D-60          I   232 (  6)         RTS
+032E-                 17               .IN     ../../common/CH01-Getkey/getkey_routine.asm
+032E-            I     1       ; 'GETKEY' KEYBOARD INPUT ROUTINE READS AND DEBOUNCES KEYBOARD. RETURNS WITH
+032E-            I     2       ; KEY NUMBER IN ACCUMULATOR IF KEY DOWN. OPERATION: SENDS NUMBERS 0-F TO 74154
+032E-            I     3       ; (4 TO 16 LINE DECODER), WHICH GROUNDS ONE SIDE OF KEYSWITCHES ONE AT A TIME.
+032E-            I     4       ; IF A KEY IS DOWN, PA7 OF VIA #3 WILL BE GROUNDED, AND THE CURRENT VALUE
+032E-            I     5       ; APPLIED TO THE 74154 BE THE KEY NUMBER. WHEN THE PROGRAM DETECTS A KEY CLOSE
+032E-            I     6       ; CHECKS FOR KEY CLOSURE FOR 50 MS. TO ELIMINATE BOUNCE.
+032E-            I     7       ; NOTE: IF NO KEY IS PRESSED, GETKEY WILL WAIT.
+032E-            I     8       ;
+032E-2C 01 CC    I     9 (  4) GETKEY  BIT     PORT3A      ; SEE IF KEY IS STILL DOWN FROM LAST KEY CLOSURE:
+0331-            I    10                                   ;  KEYSTROBE IN 'N' STATUS BIT.
+0331-10 FB       I    11 (2**)         BPL     GETKEY      ; IF YES, WAIT FOR KEY RELEASE
+0333-A2 0F       I    12 (  2) RSTART  LDX     #15         ; SET KEY COUNTER TO 15
+0335-8E 00 CC    I    13 (  4) NXTKEY  STX     PORT3B      ; OUTPUT KEY # TO 74154
+0338-2C 01 CC    I    14 (  4)         BIT     PORT3A      ; SEE IF KEY DOWN: STROBE IN 'N'
+033B-10 05       I    15 (2**)         BPL     BOUNCE      ;  IF YES, GO DEBOUNCE
+033D-CA          I    16 (  2)         DEX                 ;   DECREMENT KEY #
+033E-10 F5       I    17 (2**)         BPL     NXTKEY      ;  NO, DO NEXT KEY
+0340-30 F1       I    18 (2**)         BMI     RSTART      ; START OVER
+0342-8A          I    19 (  2) BOUNCE  TXA                 ; SAVE KEY NUMBER IN A
+0343-A0 12       I    20 (  2)         LDY     #$12        ; OUTER LOOP CNT LOAD FOR DELAY OF 50 MS.
+0345-A2 FF       I    21 (  2) LP1     LDX     #$FF        ; INNER 11 US. LOOP
+0347-2C 01 CC    I    22 (  4) LP2     BIT     PORT3A      ; SEE IF KEY STILL DOWN
+034A-30 E7       I    23 (2**)         BMI     RSTART      ; IF NOT, KEY NOT VALID, RESTART
+034C-CA          I    24 (  2)         DEX
+034D-D0 F8       I    25 (2**)         BNE     LP2         ; THIS LOOP USES 2115*5 US.
+034F-88          I    26 (  2)         DEY
+0350-D0 F3       I    27 (2**)         BNE     LP1         ; OUTER LOOP: TOTAL IS 50 MS.
+0352-60          I    28 (  6)         RTS                 ; DONE: KEY IN A.
+0353-            I    29       ;
+0353-            I    30       ; SUBROUTINE 'INITKEY'
+0353-            I    31       ; TAKES CARE OF INITIALIZING VIA #3 FOR USING WITH THE GETKEY ROUTINE FROM
+0353-            I    32       ; THE CODE.
+0353-            I    33       ;
+0353-A9 00       I    34 (  2) INITKEY LDA     #0
+0355-8D 03 CC    I    35 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+0358-A9 FF       I    36 (  2)         LDA     #$FF
+035A-8D 02 CC    I    37 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
+035D-60          I    38 (  6)         RTS
+03EA                 18               .NO     $03EA,$FF
+03EA-                 19               .IN     interrupt.asm
+03EA-            I     1       ;
+03EA-            I     2       ; INTERRUPT-HANDLING ROUTINE
+03EA-            I     3       ; COMPLEMENTS LEDS AT EACH INTERRUPT.
+03EA-            I     4       ;
+03EA-48          I     5 (  3) DOINT   PHA                 ; SAVE ACCUMULATOR
+03EB-AD 01 C0    I     6 (  4)         LDA     PORT1A      ; GET PORT FOR COMPLEMENTING
+03EE-45 05       I     7 (  3)         EOR     MASKA       ; COMPLEMENT NECESSARY BITS
+03F0-8D 01 C0    I     8 (  4)         STA     PORT1A      ; STORE COMPLEMENTED CONTENTS
+03F3-AD 00 C0    I     9 (  4)         LDA     PORT1B      ; DO SAME WITH PORT1B
+03F6-45 06       I    10 (  3)         EOR     MASKB
+03F8-8D 00 C0    I    11 (  4)         STA     PORT1B
+03FB-AD 04 C0    I    12 (  4)         LDA     T1LL        ; CLEAR INTERRUPT BIT IN VIA
+03FE-68          I    13 (  4)         PLA                 ; RESTORE ACCUMULATOR
+03FF-40          I    14 (  6)         RTI                 ; DONE, RESUME PROGRAM

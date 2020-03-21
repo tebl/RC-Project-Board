@@ -1,0 +1,281 @@
+0000-                  4       ;
+0000-                  5       ; PATTERN/TONE RECALL AND ESP TEST PROGRAM. FOR THE '6502 GAMES' HARDWARE,
+0000-                  6       ; BOARD SHOULD BE JUMPERED WITH VIA CHIPS AT THE ADDRESSES SPECIFIED BELOW.
+0000-                  7       ; OTHER THAN THAT THE CODE IS SHOULD BE UNCHANGED FROM THE BOOK THOUGH THERE
+0000-                  8       ; WILL BE SOME DIFFERENCES DUE TO ASSEMBLER USED.
+0000-                  9       ;
+4000-                 10       VIA1    .EQ     $4000       ; GAME BOARD (VIA #1)
+4C00-                 11       VIA3    .EQ     $4C00       ; GAME BOARD (VIA #3)
+0000-                 12
+8000-                 13               .OR     $8000
+8000-                 14               .TA     $0000
+8000-20 58 81         15 (  6) BE6502  JSR     INITKEY
+8003-                 16               .IN     ../../common/CH08-Echo/game.asm
+8003-            I     1       ;   'ECHO'
+8003-            I     2       ; PATTERN/TONE RECALL AND ESP TEST PROGRAM. THE USER GUESSES A PATTERN OF LIT
+8003-            I     3       ; LEDS AND THEIR ASSOCIATED TONES. THE TONE/LIGHT COMBINATION CAN BE PLAYED,
+8003-            I     4       ; SO THAT THE USER MUST REMEMBER IT AND REPLICATE IT CORRECTLY.
+8003-            I     5       ;
+8003-            I     6       ; OPERATING THE PROGRAM:
+8003-            I     7       ;  THE BOTTOM ROW OF LEDS IS AN INDICATOR FOR PROGRAM STATUS; THE LEFT-MOST
+8003-            I     8       ;  ONE ($10) INDICATES THAT THE PROGRAM IS EXPECTING THE USER TO INPUT THE
+8003-            I     9       ;  LENGTH OF THE SEQUENCE TO BE GUESSED. THE SECOND FROM THE LEFT ($11)
+8003-            I    10       ;  INDICATES THAT THE PROGRAM EXPECTS EITHER A GUESS (1-9), THE COMMAND TO
+8003-            I    11       ;  RESTART THE GAME (0), OR THE COMMAND TO PLAY THE SEQUECE (A-F). THE KEYS
+8003-            I    12       ;  ARE ASSOCIATED WITH THE LEDS 1-9.
+8003-            I    13       ;
+8003-            I    14       ;  LOOKING AT THE SEQUENCE WHILE IN THE MIDDLE OF GUESSING IT WILL EREASE ALL
+8003-            I    15       ;  PREVIOUS GUESSES (RESET GESNO AND ERRS TO 0). AFTER A WIN, THE PROGRAM
+8003-            I    16       ;  RESTARTS.
+8003-            I    17
+8003-            I    18       ;
+8003-            I    19       ; I/O:
+8003-            I    20       ;
+4000-            I    21       PORT1B  .EQ     VIA1        ; PORT B
+4001-            I    22       PORT1A  .EQ     VIA1+1      ; PORT A
+4002-            I    23       DDR1B   .EQ     VIA1+2      ; PORT B DATA DIRECTION REGISTER
+4003-            I    24       DDR1A   .EQ     VIA1+3      ; PORT A DATA DIRECTION REGISTER
+4004-            I    25       T1CL    .EQ     VIA1+4
+8003-            I    26
+4C00-            I    27       PORT3B  .EQ     VIA3        ; PORT B
+4C01-            I    28       PORT3A  .EQ     VIA3+1      ; PORT A
+4C02-            I    29       DDR3B   .EQ     VIA3+2      ; PORT B DATA DIRECTION REGISTER
+4C03-            I    30       DDR3A   .EQ     VIA3+3      ; PORT A DATA DIRECTION REGISTER
+8003-            I    31
+8003-            I    32       ;
+8003-            I    33       ; VARIABLE STORAGE.
+8003-            I    34       ;
+0000-            I    35       ZP      .EQ     $00
+0000-            I    36       DIGITS  .EQ     ZP          ; NUMBER OF DIGITS IN SEQUENCE
+0001-            I    37       GESNO   .EQ     ZP+1        ; NUMBER OF CORRECT GUESS, SPECIFIES
+8003-            I    38                                   ; WHERE THE USER IS IN THE SERIES.
+0002-            I    39       ERRS    .EQ     ZP+2        ; NUMBER OF ERRORS MADE IN THE SERIES.
+0003-            I    40       DUR     .EQ     ZP+3        ; TEMPORARY STORAGE FOR NOTE DURATION.
+0004-            I    41       FREQ    .EQ     ZP+4        ; TEMPORARY STORAGE FOR NOTE FREQUENCY.
+0005-            I    42       TEMP    .EQ     ZP+5        ; TEMPORARY STORAGE FOR X REGISTER.
+0006-            I    43       TABLE   .EQ     ZP+6        ; STORAGE FOR SEQUECE
+000F-            I    44       RND     .EQ     ZP+15       ; SCRATCHPAD FOR RANDOM # GENERATOR
+8003-            I    45
+8003-A9 FF       I    46 (  2) START   LDA     #$FF        ; SET UP DATA DIRECTION REGISTERS.
+8005-8D 03 40    I    47 (  4)         STA     DDR1A
+8008-8D 02 40    I    48 (  4)         STA     DDR1B
+800B-8D 02 4C    I    49 (  4)         STA     DDR3B
+800E-A9 00       I    50 (  2)         LDA     #0          ; CLEAR VARIABLE STORAGES
+8010-8D 01 40    I    51 (  4)         STA     PORT1A      ; ... AND LEDS
+8013-85 02       I    52 (  3)         STA     ERRS
+8015-85 01       I    53 (  3)         STA     GESNO
+8017-AD 04 40    I    54 (  4)         LDA     T1CL        ; GET SEED FOR RND # GENERATOR
+801A-85 10       I    55 (  3)         STA     RND+1       ;  AND STORE IN RND SCRATCHPAD.
+801C-85 13       I    56 (  3)         STA     RND+4
+801E-A9 02       I    57 (  2)         LDA     #%010       ; TURN LED #10 ON TO INDICATE
+8020-8D 00 40    I    58 (  4)         STA     PORT1B      ; NEED FOR LENGTH INPUT.
+8023-20 33 81    I    59 (  6) DIGKEY  JSR     GETKEY      ; GET LENGTH OF SERIES
+8026-C9 00       I    60 (  2)         CMP     #0          ; IS IT 0?
+8028-F0 F9       I    61 (2**)         BEQ     DIGKEY      ; IF YES, GET ANOTHER.
+802A-C9 0A       I    62 (  2)         CMP     #10         ; LENGTH GREATER THAN 9?
+802C-10 F5       I    63 (2**)         BPL     DIGKEY      ; IF YES, GET ANOTHER.
+802E-85 00       I    64 (  3)         STA     DIGITS      ; SAVE VALID LENGTH
+8030-AA          I    65 (  2)         TAX                 ; USE LENGTH-1 AS INDEX FOR FILLING...
+8031-CA          I    66 (  2)         DEX                 ; ... SERIES W/RANDOM VALUES.
+8032-86 05       I    67 (  3) FILL    STX     TEMP        ; SAVE X FROM 'RANDOM'
+8034-20 EA 80    I    68 (  6)         JSR     RANDOM
+8037-A6 05       I    69 (  3)         LDX     TEMP        ; RESTORE X
+8039-F8          I    70 (  2)         SED                 ; DO A DECIMAL ADJUST
+803A-18          I    71 (  2)         CLC
+803B-69 00       I    72 (  2)         ADC     #0
+803D-D8          I    73 (  2)         CLD
+803E-29 0F       I    74 (  2)         AND     #$0F        ; REMOVE UPPER NIBBLE SO NUMBER IS <10
+8040-F0 F0       I    75 (2**)         BEQ     FILL        ; # CAN'T BE ZERO
+8042-95 06       I    76 (  4)         STA     TABLE,X     ; STORE # IN TABLE
+8044-CA          I    77 (  2)         DEX                 ; DECREMENT FOR NEXT
+8045-10 EB       I    78 (2**)         BPL     FILL        ; LOOP IF NOT DONE
+8047-A9 00       I    79 (  2) KEY     LDA     #0          ; CLEAR LEDS
+8049-8D 01 40    I    80 (  4)         STA     PORT1A
+804C-A9 04       I    81 (  2)         LDA     #%0100      ; TURN INPUT INDICATOR ON.
+804E-8D 00 40    I    82 (  4)         STA     PORT1B
+8051-20 33 81    I    83 (  6)         JSR     GETKEY      ; GET GUESS OR PLAY COMMAND
+8054-C9 00       I    84 (  2)         CMP     #0          ; IS IT 0?
+8056-F0 AB       I    85 (2**) STRTJP  BEQ     START       ; IF YES, RESTART.
+8058-C9 0A       I    86 (  2)         CMP     #10         ; NUMBER < 10 ?
+805A-30 22       I    87 (2**)         BMI     EVAL        ; IF YES, EVALUATE GUESS.
+805C-            I    88       ;
+805C-            I    89       ; ROUTINE TO DISPLAY SERIES TO BE GUESSED BY LIGHTING LEDS AND PLAYING
+805C-            I    90       ; TONES IN SEQUECE.
+805C-            I    91       ;
+805C-A2 00       I    92 (  2) SHOW    LDX     #0
+805E-86 01       I    93 (  3)         STX     GESNO       ; CLEAR CURRENT GUESS NUMBER
+8060-86 02       I    94 (  3)         STX     ERRS        ; CLEAR CURRENT ERROR NUMBER
+8062-B5 06       I    95 (  4) SHOWLP  LDA     TABLE,X     ; GET X-TH ENTRY IN SERIES TABLE.
+8064-86 05       I    96 (  3)         STX     TEMP        ; SAVE X
+8066-20 D2 80    I    97 (  6)         JSR     LIGHT       ; LIGHT LED # (TABLE(X))
+8069-20 FD 80    I    98 (  6)         JSR     PLAY        ; PLAY TONE # (TABLE(X))
+806C-A0 FF       I    99 (  2)         LDY     #$FF        ; SET LOOP COUNTER FOR DELAY
+806E-66 03       I   100 (  5) DELAY   ROR     DUR         ; WASTE TIME
+8070-26 03       I   101 (  5)         ROL     DUR
+8072-88          I   102 (  2)         DEY                 ; COUNT DOWN
+8073-D0 F9       I   103 (2**)         BNE     DELAY       ; IF NOT DONE, WASTE SOME MORE TIME
+8075-A6 05       I   104 (  3)         LDX     TEMP        ; RESTORE X
+8077-E8          I   105 (  2)         INX                 ; INCREMENT INDEX TO SHOW NEXT
+8078-E4 00       I   106 (  3)         CPX     DIGITS      ; ALL DIGITS SHOWN?
+807A-D0 E6       I   107 (2**)         BNE     SHOWLP      ; IF NOT, SHOW NEXT.
+807C-F0 C9       I   108 (2**)         BEQ     KEY         ; DONE, SO GET NEXT INPUT.
+807E-            I   109       ;
+807E-            I   110       ; ROUTINE TO EVALUATE GUESSES OF PLAYER.
+807E-            I   111       ;
+807E-A6 01       I   112 (  3) EVAL    LDX     GESNO       ; GET NUMBER OF GUESS.
+8080-D5 06       I   113 (  4)         CMP     TABLE,X     ; GUESS = CORRESPONDING DIGIT = ?
+8082-F0 0D       I   114 (2**)         BEQ     CORRECT     ; IF YES, SHOW PLAYER.
+8084-E6 02       I   115 (  5) WRONG   INC     ERRS        ; GUESS WRONG, ANOTHER ERROR FOR THE TALLY.
+8086-A9 80       I   116 (  2)         LDA     #$80        ; DURATION FOR LOW TONE TO INDICATE A
+8088-85 03       I   117 (  3)         STA     DUR         ;  BAD GUESS.
+808A-A9 FF       I   118 (  2)         LDA     #$FF        ; FREQUENCY CONSTANT
+808C-20 07 81    I   119 (  6)         JSR     PLYTON      ; PLAY IT
+808F-F0 06       I   120 (2**)         BEQ     ENDCHK      ; CHECK FOR ENDGAME
+8091-20 D2 80    I   121 (  6) CORRECT JSR     LIGHT       ; VALIDATE CORRECT GUESS...
+8094-20 FD 80    I   122 (  6)         JSR     PLAY
+8097-E6 01       I   123 (  5) ENDCHK  INC     GESNO       ; ONE MORE GUESS TAKEN.
+8099-A5 00       I   124 (  3)         LDA     DIGITS
+809B-C5 01       I   125 (  3)         CMP     GESNO       ; ALL DIGITS GUESSED?
+809D-D0 A8       I   126 (2**)         BNE     KEY         ; IF NOT, GET NEXT.
+809F-A5 02       I   127 (  3)         LDA     ERRS        ; GET NUMBER OF ERRORS.
+80A1-C9 00       I   128 (  2)         CMP     #0          ; ANY ERRORS?
+80A3-F0 15       I   129 (2**)         BEQ     WIN         ; IF NOT, PLAYER WINS.
+80A5-20 D2 80    I   130 (  6) LOSE    JSR     LIGHT       ; SHOW NUMBER OF ERRORS.
+80A8-A9 09       I   131 (  2)         LDA     #9          ; PLAY 8 DESCENDING TONES
+80AA-48          I   132 (  3) LOSELP  PHA
+80AB-20 FD 80    I   133 (  6)         JSR     PLAY
+80AE-68          I   134 (  4)         PLA
+80AF-38          I   135 (  2)         SEC
+80B0-E9 01       I   136 (  2)         SBC     #1
+80B2-D0 F6       I   137 (2**)         BNE     LOSELP
+80B4-85 01       I   138 (  3)         STA     GESNO       ; CLEAR VARIABLES
+80B6-85 02       I   139 (  3)         STA     ERRS
+80B8-F0 8D       I   140 (2**)         BEQ     KEY         ; GET NEXT GUESS SEQUECE
+80BA-A9 FF       I   141 (  2) WIN     LDA     #$FF        ; TURN ALL LEDS ON FOR WIN
+80BC-8D 01 40    I   142 (  4)         STA     PORT1A
+80BF-8D 00 40    I   143 (  4)         STA     PORT1B
+80C2-A9 01       I   144 (  2)         LDA     #1          ; PLAY 8 ASCENDING TONES
+80C4-48          I   145 (  3) WINLP   PHA
+80C5-20 FD 80    I   146 (  6)         JSR     PLAY
+80C8-68          I   147 (  4)         PLA
+80C9-18          I   148 (  2)         CLC
+80CA-69 01       I   149 (  2)         ADC     #01
+80CC-C9 0A       I   150 (  2)         CMP     #10
+80CE-D0 F4       I   151 (2**)         BNE     WINLP
+80D0-F0 84       I   152 (2**)         BEQ     STRTJP      ; USE DOUBLE-JUMP FOR RESTART
+80D2-            I   153       ;
+80D2-            I   154       ; SUBROUTINE 'LIGHT'
+80D2-            I   155       ; ROUTINE TO LIGHT N-TH LED, WHERE N IS THE NUMBER PASSED AS A PARAMETER IN
+80D2-            I   156       ; THE ACCUMULATOR.
+80D2-            I   157       ;
+80D2-48          I   158 (  3) LIGHT   PHA                 ; SAVE A
+80D3-A8          I   159 (  2)         TAY                 ; USE AS COUNTER IN Y
+80D4-A9 00       I   160 (  2)         LDA     #0          ; CLEAR A FOR BIT SHIFT
+80D6-8D 00 40    I   161 (  4)         STA     PORT1B      ; CLEAR HI LEDS.
+80D9-38          I   162 (  2)         SEC                 ; GENERATE HI BIT TO SHIFT LEFT.
+80DA-2A          I   163 (  2) LTSHFT  ROL     A           ; MOVE HI BIT LEFT.
+80DB-88          I   164 (  2)         DEY                 ; DECREMENT COUNTER
+80DC-D0 FC       I   165 (2**)         BNE     LTSHFT      ; SHIFTS DONE?
+80DE-8D 01 40    I   166 (  4)         STA     PORT1A      ; STORE CORRECT PATTERN
+80E1-90 05       I   167 (2**)         BCC     LTCC        ; BIT 9 NOT HI, DONE.
+80E3-A9 01       I   168 (  2)         LDA     #1
+80E5-8D 00 40    I   169 (  4)         STA     PORT1B      ; TURN LED 9 ON.
+80E8-68          I   170 (  4) LTCC    PLA                 ; RESTORE A
+80E9-60          I   171 (  6)         RTS
+80EA-            I   172       ;
+80EA-            I   173       ; SUBROUTINE 'RANDOM'
+80EA-            I   174       ; RANDOM NUMBER GENERATOR, RETURNS WITH NEW RANDOM NUMBER IN ACCUMULATOR.
+80EA-            I   175       ;
+80EA-38          I   176 (  2) RANDOM  SEC
+80EB-A5 10       I   177 (  3)         LDA     RND+1
+80ED-65 13       I   178 (  3)         ADC     RND+4
+80EF-65 14       I   179 (  3)         ADC     RND+5
+80F1-85 0F       I   180 (  3)         STA     RND
+80F3-A2 04       I   181 (  2)         LDX     #4
+80F5-B5 0F       I   182 (  4) RNDLP   LDA     RND,X
+80F7-95 10       I   183 (  4)         STA     RND+1,X
+80F9-CA          I   184 (  2)         DEX
+80FA-10 F9       I   185 (2**)         BPL     RNDLP
+80FC-60          I   186 (  6)         RTS
+80FD-            I   187       ;
+80FD-            I   188       ; SUBROUTINE 'PLAY'
+80FD-            I   189       ; ROUTINE TO PLAY TONES WHOSE NUMBER IS PASSED IN BY ACCUMULATOR. IF ENTERED
+80FD-            I   190       ; AT PLYTON, IT WILL PLAY TONE WHOSE LENGTH IS IN DUR, FREQUENCY IN THE
+80FD-            I   191       ; ACCUMULATOR INSTEAD.
+80FD-A8          I   192 (  2) PLAY    TAY                 ; USE TONE # AS INDEX...
+80FE-88          I   193 (  2)         DEY                 ; DECREMENT TO MATCH TABLES
+80FF-B9 2A 81    I   194 ( 4*)         LDA     DURTAB,Y    ; GET DURATION FOR TONE N-TH TONE
+8102-85 03       I   195 (  3)         STA     DUR         ; SAVE IT.
+8104-B9 21 81    I   196 ( 4*)         LDA     NOTAB,Y     ; GET FREQUENCY CONSTANT FOR N-TH TONE
+8107-85 04       I   197 (  3) PLYTON  STA     FREQ        ; SAVE IT.
+8109-A9 00       I   198 (  2)         LDA     #0          ; SET SPKR PORT LO.
+810B-8D 00 4C    I   199 (  4)         STA     PORT3B
+810E-A6 03       I   200 (  3)         LDX     DUR         ; GET DURATION IN NUMBER OF 1/2 CYCLES.
+8110-A4 04       I   201 (  3) FL2     LDY     FREQ        ; GET FREQUENCY
+8112-88          I   202 (  2) FL1     DEY                 ; COUNT DOWN DELAY...
+8113-18          I   203 (  2)         CLC                 ; WASTE TIME
+8114-90 00       I   204 (2**)         BCC     FL0
+8116-D0 FA       I   205 (2**) FL0     BNE     FL1         ; LOOP FOR DELAY
+8118-49 FF       I   206 (  2)         EOR     #$FF        ; COMPLEMENT PORT
+811A-8D 00 4C    I   207 (  4)         STA     PORT3B
+811D-CA          I   208 (  2)         DEX                 ; COUNT DOWN DURATION...
+811E-D0 F0       I   209 (2**)         BNE     FL2         ; LOOP UNTIL NOTE OVER.
+8120-60          I   210 (  6)         RTS                 ; DONE.
+8121-            I   211       ;
+8121-            I   212       ; TABLE FOR NOTE FREQUENCIES.
+8121-            I   213       ;
+8121-C9 BE A9 96 
+     8E 7E 70 64 
+     5E          I   214       NOTAB   .HS     C9.BE.A9.96.8E.7E.70.64.5E
+812A-            I   215       ;
+812A-            I   216       ; TABLE FOR NOTE DURATIONS.
+812A-            I   217       ;
+812A-6B 72 80 8F 
+     94 AA BF D7 
+     E4          I   218       DURTAB  .HS     6B.72.80.8F.94.AA.BF.D7.E4
+8133-                 17               .IN     ../../common/CH01-Getkey/getkey_routine.asm
+8133-            I     1       ; 'GETKEY' KEYBOARD INPUT ROUTINE READS AND DEBOUNCES KEYBOARD. RETURNS WITH
+8133-            I     2       ; KEY NUMBER IN ACCUMULATOR IF KEY DOWN. OPERATION: SENDS NUMBERS 0-F TO 74154
+8133-            I     3       ; (4 TO 16 LINE DECODER), WHICH GROUNDS ONE SIDE OF KEYSWITCHES ONE AT A TIME.
+8133-            I     4       ; IF A KEY IS DOWN, PA7 OF VIA #3 WILL BE GROUNDED, AND THE CURRENT VALUE
+8133-            I     5       ; APPLIED TO THE 74154 BE THE KEY NUMBER. WHEN THE PROGRAM DETECTS A KEY CLOSE
+8133-            I     6       ; CHECKS FOR KEY CLOSURE FOR 50 MS. TO ELIMINATE BOUNCE.
+8133-            I     7       ; NOTE: IF NO KEY IS PRESSED, GETKEY WILL WAIT.
+8133-            I     8       ;
+8133-2C 01 4C    I     9 (  4) GETKEY  BIT     PORT3A      ; SEE IF KEY IS STILL DOWN FROM LAST KEY CLOSURE:
+8136-            I    10                                   ;  KEYSTROBE IN 'N' STATUS BIT.
+8136-10 FB       I    11 (2**)         BPL     GETKEY      ; IF YES, WAIT FOR KEY RELEASE
+8138-A2 0F       I    12 (  2) RSTART  LDX     #15         ; SET KEY COUNTER TO 15
+813A-8E 00 4C    I    13 (  4) NXTKEY  STX     PORT3B      ; OUTPUT KEY # TO 74154
+813D-2C 01 4C    I    14 (  4)         BIT     PORT3A      ; SEE IF KEY DOWN: STROBE IN 'N'
+8140-10 05       I    15 (2**)         BPL     BOUNCE      ;  IF YES, GO DEBOUNCE
+8142-CA          I    16 (  2)         DEX                 ;   DECREMENT KEY #
+8143-10 F5       I    17 (2**)         BPL     NXTKEY      ;  NO, DO NEXT KEY
+8145-30 F1       I    18 (2**)         BMI     RSTART      ; START OVER
+8147-8A          I    19 (  2) BOUNCE  TXA                 ; SAVE KEY NUMBER IN A
+8148-A0 12       I    20 (  2)         LDY     #$12        ; OUTER LOOP CNT LOAD FOR DELAY OF 50 MS.
+814A-A2 FF       I    21 (  2) LP1     LDX     #$FF        ; INNER 11 US. LOOP
+814C-2C 01 4C    I    22 (  4) LP2     BIT     PORT3A      ; SEE IF KEY STILL DOWN
+814F-30 E7       I    23 (2**)         BMI     RSTART      ; IF NOT, KEY NOT VALID, RESTART
+8151-CA          I    24 (  2)         DEX
+8152-D0 F8       I    25 (2**)         BNE     LP2         ; THIS LOOP USES 2115*5 US.
+8154-88          I    26 (  2)         DEY
+8155-D0 F3       I    27 (2**)         BNE     LP1         ; OUTER LOOP: TOTAL IS 50 MS.
+8157-60          I    28 (  6)         RTS                 ; DONE: KEY IN A.
+8158-            I    29       ;
+8158-            I    30       ; SUBROUTINE 'INITKEY'
+8158-            I    31       ; TAKES CARE OF INITIALIZING VIA #3 FOR USING WITH THE GETKEY ROUTINE FROM
+8158-            I    32       ; THE CODE.
+8158-            I    33       ;
+8158-A9 00       I    34 (  2) INITKEY LDA     #0
+815A-8D 03 4C    I    35 (  4)         STA     DDR3A       ; SET KEY STROBE PORT FOR INPUT
+815D-A9 FF       I    36 (  2)         LDA     #$FF
+815F-8D 02 4C    I    37 (  4)         STA     DDR3B       ; SET KEYS FOR OUTPUT
+8162-60          I    38 (  6)         RTS
+8163-                 18       ;
+8163-                 19       ; STORE CPU INITIALIZATION VECTORS AT THE END OF THE EEPROM.
+8163-                 20       ;
+FFFA                 21               .NO     $FFFA,$FF
+FFFA-00 80            22               .DA     BE6502      ; NMI VECTOR
+FFFC-00 80            23               .DA     BE6502      ; RESET VECTOR
+FFFE-00 80            24               .DA     BE6502      ; IRQ VECTOR
