@@ -1,0 +1,25 @@
+#define PA0 2
+#define PA1 3
+#define PA2 4
+#define PA3 5
+#define PA4 6
+#define PA5 7
+#define PA6 8
+#define PA7 9
+#define PB0 10
+#define PB1 11
+#define PB2 12
+#define PB3 13
+#define PB4 A0
+#define PB5 A1
+#define PB6 A2
+#define PB7 A3
+
+#define CP1 PB0
+#define CP2 PB1
+#define L0 PB2
+#define L1 PB3
+#define L2 PB4
+#define L3 PB5
+#define SW2 PB6
+#define SW1 PB7
