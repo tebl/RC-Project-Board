@@ -1,0 +1,65 @@
+0000-                  4
+0000-                  5       * ----------------------------------------------------------------------
+0000-                  6       * PLAY A SINGLE NOTE USING TIMER1 ON 6522 (VIA) FOUND ON THE PROJECT
+0000-                  7       * BOARD. REQUIRES INTERRUPT VECTOR CONFIGURED TO POINT TO INTR (SEE
+0000-                  8       * LISTING).
+0000-                  9       *
+00D0-                 10       VOLUME  .EQ     $D0
+00D1-                 11       TEMP    .EQ     $D1
+00D2-                 12       OUTPUT  .EQ     $D2
+0000-                 13
+0000-                 14
+00FB-                 15       POINTH  .EQ     $FB         DIGITS 1-2
+00FA-                 16       POINTL  .EQ     $FA         DIGITS 3-4
+00F9-                 17       INH     .EQ     $F9         DIGITS 5-6
+1F1F-                 18       SCANDS  .EQ     $1F1F
+0000-                 19
+1700-                 20       VIA     .EQ     $1700
+1700-                 21       IRB     .EQ     VIA
+1700-                 22       ORA     .EQ     VIA + $1
+1700-                 23       DDRB    .EQ     VIA + $2
+1700-                 24       DDRA    .EQ     VIA + $3
+1700-                 25       T1CL    .EQ     VIA + $4
+1700-                 26       T1CH    .EQ     VIA + $5
+1700-                 27       ACR     .EQ     VIA + $B
+1700-                 28       IER     .EQ     VIA + $E
+0000-                 29
+0200-                 30               .OR     $0200
+0200-                 31               .TA     $0200
+0200-                 32
+0200-A9 FF            33 (  2) SETUP   LDA     #$FF        SET PORT A
+0202-8D 00 17         34 (  4)         STA     DDRA         AS OUTPUTS
+0205-A9 00            35 (  2)         LDA     #$00        SET PORT B
+0207-8D 00 17         36 (  4)         STA     DDRB         AS INPUTS
+020A-A9 FF            37 (  2) TIMER   LDA     #$FF        RESET TIMER1
+020C-8D 00 17         38 (  4)         STA     T1CL
+020F-8D 00 17         39 (  4)         STA     T1CH
+0212-A9 40            40 (  2)         LDA     #$40        FREE-RUN MODE WITHOUT
+0214-8D 00 17         41 (  4)         STA     ACR          ENABLING OUTPUT ON PB7
+0217-A9 C0            42 (  2)         LDA     #$C0        ENABLE VIA
+0219-8D 00 17         43 (  4)         STA     IER          INTERRUPT
+021C-58               44 (  2)         CLI                 ENABLE CPU INTERRUPT
+021D-                 45
+021D-A9 FF            46 (  2) WAIT    LDA     #$FF        READ SWITCHES,
+021F-4D 00 17         47 (  4)         EOR     IRB          BUT INVERT LOGIC
+0222-85 D0            48 (  2)         STA     VOLUME       TO AVOID KEEPING
+0224-4C 1D 02         49 (  3)         JMP     WAIT         VOLUME AT 100%
+0227-                 50
+0227-A9 E4            51 (  2) SETNOTE LDA     #$E4
+0229-8D 00 17         52 (  4)         STA     T1CL
+022C-A9 17            53 (  2)         LDA     #$17
+022E-8D 00 17         54 (  4)         STA     T1CH
+0231-60               55 (  6)         RTS
+0232-                 56
+0232-2C 00 17         57 (  4) INTR    BIT     T1CL
+0235-A5 D0            58 (  3)         LDA     VOLUME
+0237-C5 D1            59 (  3)         CMP     TEMP
+0239-F0 04            60 (2**)         BEQ     TOGGLE
+023B-85 D1            61 (  2)         STA     TEMP
+023D-85 D2            62 (  2)         STA     OUTPUT
+023F-A9 FF            63 (  2) TOGGLE  LDA     #$FF
+0241-45 D2            64 (  3)         EOR     OUTPUT
+0243-85 D2            65 (  2)         STA     OUTPUT
+0245-8D 00 17         66 (  4)         STA     ORA
+0248-58               67 (  2)         CLI
+0249-40               68 (  6)         RTI

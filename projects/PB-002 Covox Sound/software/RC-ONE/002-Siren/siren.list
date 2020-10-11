@@ -1,0 +1,30 @@
+0000-                  4
+0000-                  5       * ----------------------------------------------------------------------
+0000-                  6       * SIREN PROGRAM AS FOUND IN THE BOOK "6502 APPLICATIONS BOOK" BY RODNEY
+0000-                  7       * ZAKS. ADAPTED FOR THE KIM-1 WITH THE 6502 PROJECT PLATFORM BOARD AND
+0000-                  8       * COVOX PROJECT BOARD.
+0000-                  9       *
+00D1-                 10       DELAY   .EQ     $D1
+0000-                 11
+1700-                 12       VIA     .EQ     $1700
+1700-                 13       IRB     .EQ     VIA
+1700-                 14       ORA     .EQ     VIA + $1
+1700-                 15       DDRB    .EQ     VIA + $2
+1700-                 16       DDRA    .EQ     VIA + $3
+0000-                 17
+0200-                 18               .OR     $0200
+0200-                 19               .TA     $0200
+0200-                 20
+0200-A9 FF            21 (  2) START   LDA     #$FF        SET PORT A
+0202-8D 00 17         22 (  4)         STA     DDRA         AS OUTPUTS
+0205-85 D1            23 (  2)         STA     DELAY       INITIALIZE DELAY
+0207-A9 03            24 (  2)         LDA     #$03        INITIALIZE VOLUME
+0209-8D 00 17         25 (  4)         STA     ORA
+020C-A9 FF            26 (  2) SWITCH  LDA     #$FF        EXCLUSIVE OR WITH
+020E-4D 00 17         27 (  4)         EOR     ORA          MASK $FF IS USED
+0211-8D 00 17         28 (  4)         STA     ORA          TO INVERT OUTPUT.
+0214-A6 D1            29 (  3)         LDX     DELAY
+0216-CA               30 (  2) LOOP    DEX
+0217-D0 FD            31 (2**)         BNE     LOOP
+0219-C6 D1            32 (  5)         DEC     DELAY
+021B-4C 0C 02         33 (  3)         JMP     SWITCH

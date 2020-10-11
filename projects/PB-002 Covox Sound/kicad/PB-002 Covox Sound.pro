@@ -1,4 +1,4 @@
-update=11/10/2020 23:23:53
+update=11/10/2020 23:55:12
 version=1
 last_client=kicad
 [cvpcb]
@@ -12,7 +12,7 @@ LibDir=
 [pcbnew]
 version=1
 PageLayoutDescrFile=
-LastNetListRead=PP 6502 Game Board.net
+LastNetListRead=PB-002 Covox Sound.net
 CopperLayerCount=2
 BoardThickness=1.6
 AllowMicroVias=0
@@ -248,7 +248,7 @@ dPairViaGap=0.25
 [schematic_editor]
 version=1
 PageLayoutDescrFile=
-PlotDirectoryName=../../documentation/schematic/
+PlotDirectoryName=../../../documentation/schematic/
 SubpartIdSeparator=0
 SubpartFirstId=65
 NetFmtName=Pcbnew

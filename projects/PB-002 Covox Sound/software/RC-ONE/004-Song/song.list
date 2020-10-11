@@ -1,0 +1,76 @@
+0000-                  4
+0000-                  5       * ----------------------------------------------------------------------
+0000-                  6       * PLAY A SONG USING THE TIMERS ON THE 6522.
+0000-                  7       *
+0000-                  8
+0001-                  9       ADDRS   .EQ     $01
+0003-                 10       TEMP    .EQ     $03
+0004-                 11       YSAVE   .EQ     $04
+0005-                 12       F       .EQ     $05
+0000-                 13
+1700-                 14       VIA     .EQ     $1700
+1700-                 15       ORA     .EQ     VIA + $1
+1700-                 16       DDRA    .EQ     VIA + $3
+1700-                 17       T1CL    .EQ     VIA + $4
+1700-                 18       T1CH    .EQ     VIA + $5
+1700-                 19       TIMER   .EQ     VIA + $7
+1700-                 20       ACR     .EQ     VIA + $B
+1700-                 21       IER     .EQ     VIA + $E
+0000-                 22
+0010-                 23               .OR     $0010
+0010-                 24               .TA     $0010
+0010-A9 31            25 (  2) TIME20  LDA     #$31
+0012-8D 00 17         26 (  4)         STA     TIMER
+0015-2C 00 17         27 (  4) T1      BIT     TIMER       RESET TIMER
+0018-10 FB            28 (2**)         BPL     T1
+001A-CA               29 (  2)         DEX
+001B-D0 F3            30 (2**)         BNE     TIME20
+001D-60               31 (  6)         RTS
+001E-                 32
+0020-                 33               .OR     $0020
+0020-                 34               .TA     $0020
+0020-84 04            35 (  3) FREQT   STY     YSAVE
+0022-85 05            36 (  2)         STA     F
+0024-A9 31            37 (  2) FT0     LDA     #$31
+0026-8D 00 17         38 (  4)         STA     TIMER       START TIMER (1/20 SEC.)
+0029-A4 05            39 (  3) FT1     LDY     F
+002B-C8               40 (  2) FT2     INY
+002C-D0 FD            41 (2**)         BNE     FT2
+002E-EE 00 17         42 (  6)         INC     ORA         SWITCH SPEAKER
+0031-2C 00 17         43 (  4)         BIT     TIMER       TIME LAPSED?
+0034-10 F3            44 (2**)         BPL     FT1         NO: GO ON.
+0036-CA               45 (  2) FT3     DEX
+0037-D0 EB            46 (2**)         BNE     FT0
+0039-A4 04            47 (  3)         LDY     YSAVE
+003B-60               48 (  6)         RTS
+003C-                 49
+0040-                 50               .OR     $0040
+0040-                 51               .TA     $0040
+0040-A2 0F            52 (  2) START   LDX     #$0F
+0042-9A               53 (  2)         TXS
+0043-A9 00            54 (  2)         LDA     #$00
+0045-8D FA 17         55 (  4)         STA     $17FA
+0048-8D FE 17         56 (  4)         STA     $17FE
+004B-A9 1C            57 (  2)         LDA     #$1C
+004D-8D FB 17         58 (  4)         STA     $17FB
+0050-8D FF 17         59 (  4)         STA     $17FF       INTERRUPT VECTOR
+0053-A9 01            60 (  2)         LDA     #$01
+0055-8D 00 17         61 (  4)         STA     ORA         OUTPUT AUDIO
+0058-A0 00            62 (  2) DACAPO  LDY     #$00
+005A-B1 01            63 ( 5*) NEXT    LDA     (ADDRS),Y
+005C-85 03            64 (  2)         STA     TEMP
+005E-29 7F            65 (  2)         AND     #$7F
+0060-AA               66 (  2)         TAX                 DURATION
+0061-F0 F5            67 (2**)         BEQ     DACAPO
+0063-C8               68 (  2)         INY
+0064-B1 01            69 ( 5*)         LDA     (ADDRS),Y
+0066-F0 10            70 (2**)         BEQ     TONE
+0068-20 20 00         71 (  6)         JSR     FREQT
+006B-24 03            72 (  3)         BIT     TEMP
+006D-30 05            73 (2**)         BMI     AFTER
+006F-A2 02            74 (  2)         LDX     #$02
+0071-20 10 00         75 (  6)         JSR     TIME20
+0074-C8               76 (  2) AFTER   INY
+0075-4C 5A 00         77 (  3)         JMP     NEXT
+0078-20 10 00         78 (  6) TONE    JSR     TIME20
+007B-F0 F7            79 (2**)         BEQ     AFTER
