@@ -1,9 +1,13 @@
 {
 	"folders": [
-		{
-			"name": "Arduino Cube",
-			"path": "."
-		}
-	],
+    {
+      "name": "Arduino Cube",
+      "path": "."
+    },
+    {
+      "name": "ExRAM",
+      "path": "..\\..\\..\\..\\..\\RC1\\software\\arduino\\ExRAM"
+    }
+  ],
   "settings": {}
 }

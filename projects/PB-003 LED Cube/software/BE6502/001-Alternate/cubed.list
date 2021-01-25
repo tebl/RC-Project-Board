@@ -1,0 +1,84 @@
+0000-                  4
+0000-                  5       * ----------------------------------------------------------------------
+0000-                  6       * SAMPLE PROGRAM AS FOUND IN THE BOOK "6502 APPLICATIONS BOOK" BY RODNEY
+0000-                  7       * ZAKS, IT IS A SOFTWARE METHOD OF CONTROLLING SOUND DURATION.ADAPTED FOR
+0000-                  8       * THE KIM-1 WITH THE 6502 PROJECT PLATFORM BOARD / COVOX PROJECT BOARD.
+0000-                  9       *
+0004-                 10       CURRENT .EQ     $04
+0000-                 11
+6000-                 12       VIA     .EQ     $6000       SBC VIA
+6000-                 13       ORB     .EQ     VIA         PORT B DATA
+6001-                 14       ORA     .EQ     VIA+1       PORT A DATA
+6002-                 15       DDRB    .EQ     VIA+2       PORT B DATA-DIRECTION
+6003-                 16       DDRA    .EQ     VIA+3       PORT A DATA-DIRECTION
+0000-                 17
+4000-                 18       PP_VIA  .EQ     $4000       PP VIA
+4000-                 19       PP_ORB  .EQ     PP_VIA
+4001-                 20       PP_ORA  .EQ     PP_VIA+1
+4002-                 21       PP_DDRB .EQ     PP_VIA+2
+4003-                 22       PP_DDRA .EQ     PP_VIA+3
+0000-                 23
+8000-                 24               .OR     $8000
+8000-                 25               .TA     $0000
+8000-A9 FF            26 (  2) START   LDA     #$FF        SET SBC VIA PORT B AS OUTPUTS
+8002-8D 02 60         27 (  4)         STA     DDRB
+8005-                 28
+8005-A9 7F            29 (  2)         LDA     #%1111111   PORT A, USED TO LOAD VALUES FOR LED-S
+8007-8D 03 40         30 (  4)         STA     PP_DDRA      INTO LATCHES.
+800A-A9 1F            31 (  2)         LDA     #%0011111   PORT B, USED FOR CONTROL LINES AS WELL AS
+800C-8D 02 40         32 (  4)         STA     PP_DDRB      SWITCHES.
+800F-                 33
+800F-A9 55            34 (  2)         LDA     #$55
+8011-85 04            35 (  2)         STA     CURRENT
+8013-                 36
+8013-A9 3F            37 (  2) OUTPUT  LDA     #%00111111  DISABLE ALL LAYERS
+8015-8D 00 40         38 (  4)         STA     PP_ORB
+8018-                 39
+8018-A9 FF            40 (  2)         LDA     #$FF        ALTERNATE LEDS ON
+801A-45 04            41 (  3)         EOR     CURRENT      THE LAYERS BY DOING
+801C-85 04            42 (  2)         STA     CURRENT      AN EXCLUSIVE OR ON
+801E-8D 01 40         43 (  4)         STA     PP_ORA       THE CURRENT VALUE,
+8021-20 53 80         44 (  6)         JSR     LATCH        THEN LATCH THEM.
+8024-                 45
+8024-20 5E 80         46 (  6)         JSR     DELAY
+8027-A9 3B            47 (  2)         LDA     #%00111011
+8029-8D 00 40         48 (  4)         STA     PP_ORB
+802C-8D 00 60         49 (  4)         STA     ORB
+802F-                 50
+802F-20 5E 80         51 (  6)         JSR     DELAY
+8032-A9 37            52 (  2)         LDA     #%00110111
+8034-8D 00 40         53 (  4)         STA     PP_ORB
+8037-8D 00 60         54 (  4)         STA     ORB
+803A-                 55
+803A-20 5E 80         56 (  6)         JSR     DELAY
+803D-A9 2F            57 (  2)         LDA     #%00101111
+803F-8D 00 40         58 (  4)         STA     PP_ORB
+8042-8D 00 60         59 (  4)         STA     ORB
+8045-                 60
+8045-20 5E 80         61 (  6)         JSR     DELAY
+8048-A9 1F            62 (  2)         LDA     #%00011111
+804A-8D 00 40         63 (  4)         STA     PP_ORB
+804D-8D 00 60         64 (  4)         STA     ORB
+8050-                 65
+8050-4C 13 80         66 (  3)         JMP     OUTPUT
+8053-                 67
+8053-A9 3C            68 (  2) LATCH   LDA     #%00111100  LATCH VALUES BY
+8055-8D 00 40         69 (  4)         STA     PP_ORB       TAKING THE CONTROLS
+8058-A9 3F            70 (  2)         LDA     #%00111111   LOW AND THEN
+805A-8D 00 40         71 (  4)         STA     PP_ORB       HIGH AGAIN.
+805D-60               72 (  6)         RTS
+805E-                 73
+805E-                 74
+805E-A2 FF            75 (  2) DELAY   LDX     #$FF        LOAD DELAY VALUE INTO X
+8060-CA               76 (  2) LPDLY   DEX                 DECREMENT X
+8061-D0 FD            77 (2**)         BNE     LPDLY
+8063-60               78 (  6)         RTS
+8064-                 79
+8064-                 80
+8064-                 81       * ---------------------------------------------------------
+8064-                 82       * STORE VECTORS AT END OF EPROM.
+FFFA-                 83               .OR     $FFFA
+FFFA-                 84               .TA     $7FFA
+FFFA-00 80            85               .DA     START           NMI VECTOR
+FFFC-00 80            86               .DA     START           RESET VECTOR
+FFFE-00 80            87               .DA     START           IRQ VECTOR
